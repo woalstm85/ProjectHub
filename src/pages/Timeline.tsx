@@ -88,10 +88,10 @@ const Timeline: React.FC = () => {
 
   if (projects.length === 0) {
     return (
-      <div style={{ padding: 24 }}>
-        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16, color: colors.text }}>
-          Project Timeline
-        </h2>
+      <div>
+        <div style={{ marginBottom: 24 }}>
+          <Title level={2} style={{ margin: 0 }}>타임라인</Title>
+        </div>
         <Card bordered={false} style={{ background: colors.cardBg }}>
           <Empty description={<span style={{ color: colors.textSecondary }}>등록된 프로젝트가 없습니다.</span>} />
         </Card>
@@ -713,7 +713,7 @@ const Timeline: React.FC = () => {
       <div style={{ marginBottom: 16, padding: '0 4px', display: 'flex', flexDirection: 'column', gap: 12 }}>
         {/* Row 1: Title */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: colors.text }}>타임라인</h2>
+          <Title level={2} style={{ margin: 0 }}>타임라인</Title>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 12, color: colors.legendText }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

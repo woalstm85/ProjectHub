@@ -14,6 +14,7 @@ import {
   Tooltip,
   Segmented,
   Avatar,
+  Typography,
 } from 'antd';
 import {
   PlusOutlined,
@@ -39,6 +40,8 @@ import {
 import { useMemberStore } from '../store/memberStore';
 import ProjectModal from '../components/ProjectModal';
 import { useSettings } from '../store/settingsStore';
+
+const { Title } = Typography;
 
 const Projects: React.FC = () => {
   const navigate = useNavigate();
@@ -423,8 +426,8 @@ const Projects: React.FC = () => {
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>프로젝트 목록</h1>
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Title level={2} style={{ margin: 0 }}>프로젝트</Title>
         <Space>
           <Segmented
             value={viewMode}

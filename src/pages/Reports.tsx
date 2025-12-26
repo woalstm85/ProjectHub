@@ -470,7 +470,7 @@ const Reports: React.FC = () => {
       <Spin spinning={isExporting} tip="PDF 생성 중...">
         <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <Title level={2} style={{ marginBottom: 0 }}>종합 보고서</Title>
+            <Title level={2} style={{ margin: 0 }}>보고서</Title>
             <Text type="secondary">프로젝트, 팀, 비용에 대한 상세 분석 및 리포트</Text>
           </div>
           <Space>

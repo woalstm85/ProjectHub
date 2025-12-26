@@ -160,7 +160,7 @@ const Communication: React.FC = () => {
     return (
         <div className="communication-container">
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Title level={2} style={{ marginBottom: 0 }}>커뮤니케이션</Title>
+                <Title level={2} style={{ margin: 0 }}>커뮤니케이션</Title>
                 <Space>
                     {activeTab === 'notices' ? (
                         <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsNoticeModalOpen(true)}>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Tag, Avatar, Select, Button, Input, message, Popconfirm, Space, theme, Segmented, Table, Tooltip, Divider } from 'antd';
+import { Card, Tag, Avatar, Select, Button, Input, message, Popconfirm, Space, theme, Segmented, Table, Tooltip, Divider, Typography } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -21,6 +21,8 @@ import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
 import dayjs from 'dayjs';
 import TaskModal from '../components/TaskModal';
+
+const { Title } = Typography;
 
 type ViewMode = 'BOARD' | 'LIST';
 type GroupBy = 'STATUS' | 'PRIORITY' | 'ASSIGNEE';
@@ -336,9 +338,11 @@ const Tasks: React.FC = () => {
 
   if (projects.length === 0) {
     return (
-      <div style={{ padding: 24 }}>
-        <h1 style={{ color: colors.text }}>작업관리</h1>
-        <Card style={{ marginTop: 24, textAlign: 'center', padding: 40, background: colors.cardBg }}>
+      <div>
+        <div style={{ marginBottom: 24 }}>
+          <Title level={2} style={{ margin: 0 }}>작업관리</Title>
+        </div>
+        <Card style={{ textAlign: 'center', padding: 40, background: colors.cardBg }}>
           <p style={{ fontSize: 16, color: colors.textSecondary }}>프로젝트가 없습니다. 먼저 프로젝트를 생성해주세요.</p>
         </Card>
       </div>
@@ -349,8 +353,8 @@ const Tasks: React.FC = () => {
     <div style={{ height: 'calc(100vh - 100px)', display: 'flex', flexDirection: 'column', paddingBottom: 24 }}>
       {/* 헤더 */}
       <div style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h1 style={{ margin: 0, color: colors.text }}>작업관리</h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+          <Title level={2} style={{ margin: 0 }}>작업관리</Title>
           <Select
             style={{ width: 300 }}
             placeholder="프로젝트 선택"

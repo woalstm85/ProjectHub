@@ -217,7 +217,7 @@ const Dashboard: React.FC = () => {
       {/* Header Section */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <Title level={2} style={{ marginBottom: 0 }}>Dashboard</Title>
+          <Title level={2} style={{ margin: 0 }}>대시보드</Title>
           <Text type="secondary">
             {dayjs().format('YYYY년 MM월 DD일 dddd')} | 안녕하세요, {currentUser?.name || '관리자'}님!
           </Text>
