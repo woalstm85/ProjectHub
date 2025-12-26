@@ -17,6 +17,7 @@ import {
   RightOutlined,
   SearchOutlined,
   NotificationOutlined,
+  BugOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../store/authStore';
 import { useSettings } from '../store/settingsStore';
@@ -146,6 +147,11 @@ const MainLayout: React.FC = () => {
       key: '/tasks',
       icon: <CheckSquareOutlined />,
       label: '작업관리',
+    },
+    {
+      key: '/issues',
+      icon: <BugOutlined />,
+      label: '이슈 트래커',
     },
     {
       key: '/timeline',

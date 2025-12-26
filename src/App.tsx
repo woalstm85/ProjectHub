@@ -16,6 +16,7 @@ import Reports from './pages/Reports';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Communication from './pages/Communication';
+import Issues from './pages/Issues';
 import PrivateRoute from './components/PrivateRoute';
 import { SettingsProvider, useSettings } from './store/settingsStore';
 
@@ -62,6 +63,7 @@ const ThemedApp: React.FC = () => {
             <Route path="profile" element={<Profile />} />
             <Route path="settings" element={<Settings />} />
             <Route path="communication" element={<Communication />} />
+            <Route path="issues" element={<Issues />} />
           </Route>
 
           {/* 404 처리 */}
