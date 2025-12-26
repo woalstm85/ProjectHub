@@ -2,38 +2,42 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 // 이슈 타입
-export enum IssueType {
-  BUG = 'BUG',
-  FEATURE = 'FEATURE',
-  IMPROVEMENT = 'IMPROVEMENT',
-  QUESTION = 'QUESTION',
-  TASK = 'TASK',
-}
+export const IssueType = {
+  BUG: 'BUG',
+  FEATURE: 'FEATURE',
+  IMPROVEMENT: 'IMPROVEMENT',
+  QUESTION: 'QUESTION',
+  TASK: 'TASK',
+} as const;
+export type IssueType = (typeof IssueType)[keyof typeof IssueType];
 
 // 이슈 상태
-export enum IssueStatus {
-  OPEN = 'OPEN',
-  IN_PROGRESS = 'IN_PROGRESS',
-  RESOLVED = 'RESOLVED',
-  CLOSED = 'CLOSED',
-  REOPENED = 'REOPENED',
-}
+export const IssueStatus = {
+  OPEN: 'OPEN',
+  IN_PROGRESS: 'IN_PROGRESS',
+  RESOLVED: 'RESOLVED',
+  CLOSED: 'CLOSED',
+  REOPENED: 'REOPENED',
+} as const;
+export type IssueStatus = (typeof IssueStatus)[keyof typeof IssueStatus];
 
 // 이슈 우선순위
-export enum IssuePriority {
-  CRITICAL = 'CRITICAL',
-  HIGH = 'HIGH',
-  MEDIUM = 'MEDIUM',
-  LOW = 'LOW',
-}
+export const IssuePriority = {
+  CRITICAL: 'CRITICAL',
+  HIGH: 'HIGH',
+  MEDIUM: 'MEDIUM',
+  LOW: 'LOW',
+} as const;
+export type IssuePriority = (typeof IssuePriority)[keyof typeof IssuePriority];
 
 // 이슈 심각도 (버그용)
-export enum IssueSeverity {
-  BLOCKER = 'BLOCKER',
-  MAJOR = 'MAJOR',
-  MINOR = 'MINOR',
-  TRIVIAL = 'TRIVIAL',
-}
+export const IssueSeverity = {
+  BLOCKER: 'BLOCKER',
+  MAJOR: 'MAJOR',
+  MINOR: 'MINOR',
+  TRIVIAL: 'TRIVIAL',
+} as const;
+export type IssueSeverity = (typeof IssueSeverity)[keyof typeof IssueSeverity];
 
 // 이슈 댓글
 export interface IssueComment {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, Table, Progress, Tag, Space, Empty, Typography, Button, Tooltip as AntTooltip, Avatar, Divider, Select, Segmented, Input } from 'antd';
 import {
   FolderOpenFilled,
@@ -12,8 +12,6 @@ import {
   FlagFilled,
   UserOutlined,
   CloseOutlined,
-  ClockCircleOutlined,
-  FilterOutlined,
   AppstoreOutlined,
   SearchOutlined,
   AimOutlined,
@@ -58,8 +56,6 @@ const Timeline: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [memberFilter, setMemberFilter] = useState<string>('ALL');
   const [searchText, setSearchText] = useState<string>('');
-
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const isDark = effectiveTheme === 'dark';
 

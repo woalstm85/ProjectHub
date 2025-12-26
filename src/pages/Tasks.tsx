@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Tag, Avatar, Select, Button, Input, message, Popconfirm, Space, theme, Segmented, Table, Tooltip, Divider, Typography } from 'antd';
+import { Card, Tag, Avatar, Select, Button, Input, message, Popconfirm, Space, Segmented, Table, Tooltip, Divider, Typography } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -9,8 +9,6 @@ import {
   SearchOutlined,
   FilterOutlined,
   GroupOutlined,
-  UserOutlined,
-  CheckCircleOutlined,
   EnterOutlined
 } from '@ant-design/icons';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -32,7 +30,6 @@ const Tasks: React.FC = () => {
   const { projects } = useProjectStore();
   const { members } = useMemberStore();
   const { effectiveTheme, settings } = useSettings();
-  const { token } = theme.useToken();
 
   const isDark = effectiveTheme === 'dark';
 
@@ -105,7 +102,7 @@ const Tasks: React.FC = () => {
   }, [tasks, selectedProjectId, filterAssignee, filterPriority, searchText]);
 
   // Grouped Columns
-  const columns = useMemo(() => {
+  const columns = useMemo<{ id: string; title: string; color: string; avatar?: string }[]>(() => {
     if (groupBy === 'STATUS') {
       return [
         { id: TaskStatus.TODO, title: '할 일', color: isDark ? '#595959' : '#d9d9d9' },
@@ -244,7 +241,6 @@ const Tasks: React.FC = () => {
     message.success('작업이 삭제되었습니다');
   };
 
-  const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
   // Table Columns for List View
   const tableColumns = [

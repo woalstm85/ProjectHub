@@ -40,7 +40,7 @@ import {
 import { useProjectStore } from '../store/projectStore';
 import { useTaskStore } from '../store/taskStore';
 import { useMemberStore } from '../store/memberStore';
-import { useSettings, defaultSettings } from '../store/settingsStore';
+import { useSettings } from '../store/settingsStore';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -86,7 +86,7 @@ const Settings: React.FC = () => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    
+
     message.success('데이터가 내보내기되었습니다.');
   };
 
@@ -96,12 +96,12 @@ const Settings: React.FC = () => {
     reader.onload = (e) => {
       try {
         const data = JSON.parse(e.target?.result as string);
-        
+
         if (data.projects) localStorage.setItem('project-storage', data.projects);
         if (data.tasks) localStorage.setItem('task-storage', data.tasks);
         if (data.members) localStorage.setItem('member-storage', data.members);
         if (data.settings) localStorage.setItem('app-settings', data.settings);
-        
+
         message.success('데이터를 성공적으로 가져왔습니다. 페이지를 새로고침합니다.');
         setTimeout(() => window.location.reload(), 1500);
       } catch (error) {
@@ -307,7 +307,7 @@ const Settings: React.FC = () => {
 
             <div style={{ opacity: settings.notifications.enabled ? 1 : 0.5, pointerEvents: settings.notifications.enabled ? 'auto' : 'none' }}>
               <Text strong style={{ display: 'block', marginBottom: 12 }}>알림 유형</Text>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Text>마감일 알림</Text>
@@ -584,10 +584,10 @@ const Settings: React.FC = () => {
         <Col span={24}>
           <Card bordered={false} style={{ borderRadius: 12 }}>
             <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                width: 48, 
-                height: 48, 
-                borderRadius: 12, 
+              <div style={{
+                width: 48,
+                height: 48,
+                borderRadius: 12,
                 background: `linear-gradient(135deg, ${settings.primaryColor} 0%, #764ba2 100%)`,
                 display: 'inline-flex',
                 alignItems: 'center',

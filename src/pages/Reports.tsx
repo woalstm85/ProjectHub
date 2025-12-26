@@ -189,7 +189,6 @@ const Reports: React.FC = () => {
       // 원래 배경색 복원
       element.style.backgroundColor = originalBg;
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
         unit: 'mm',
@@ -430,7 +429,7 @@ const Reports: React.FC = () => {
             <XAxis dataKey="name" tick={{ fill: colors.text }} />
             <YAxis tick={{ fill: colors.text }} />
             <Tooltip
-              formatter={(value: number) => `${value.toLocaleString()}원`}
+              formatter={(value: number | undefined) => `${(value || 0).toLocaleString()}원`}
               contentStyle={{
                 backgroundColor: colors.cardBg,
                 border: `1px solid ${colors.border}`,

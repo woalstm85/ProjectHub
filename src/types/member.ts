@@ -1,11 +1,13 @@
-// 팀원 역할
-export enum MemberRole {
-  PROJECT_MANAGER = 'PROJECT_MANAGER',
-  DEVELOPER = 'DEVELOPER',
-  DESIGNER = 'DESIGNER',
-  QA = 'QA',
-  ANALYST = 'ANALYST',
-}
+// [수정] enum을 const 객체와 type으로 변경
+export const MemberRole = {
+  PROJECT_MANAGER: 'PROJECT_MANAGER',
+  DEVELOPER: 'DEVELOPER',
+  DESIGNER: 'DESIGNER',
+  QA: 'QA',
+  ANALYST: 'ANALYST',
+} as const;
+
+export type MemberRole = (typeof MemberRole)[keyof typeof MemberRole];
 
 // 팀원 인터페이스
 export interface Member {

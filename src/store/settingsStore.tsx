@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// ReactNode 앞에 'type'을 붙여줍니다.
+import React, { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 // 설정 저장소 키
 const SETTINGS_KEY = 'app-settings';
@@ -10,7 +11,7 @@ export const defaultSettings = {
   primaryColor: '#667eea',
   fontSize: 14,
   compactMode: false,
-  
+
   // 알림 설정
   notifications: {
     enabled: true,
@@ -25,12 +26,12 @@ export const defaultSettings = {
     dailyDigest: false,
     digestTime: '09:00',
   },
-  
+
   // 언어 설정
   language: 'ko',
   dateFormat: 'YYYY-MM-DD',
   timeFormat: '24h' as '24h' | '12h',
-  
+
   // 기타
   autoSave: true,
   showTips: true,
@@ -78,13 +79,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? 'dark' : 'light');
-    
+
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
   // 실제 적용될 테마 계산
-  const effectiveTheme: 'light' | 'dark' = 
+  const effectiveTheme: 'light' | 'dark' =
     settings.theme === 'system' ? systemTheme : settings.theme;
 
   // CSS 변수 적용 (글꼴 크기)
@@ -101,13 +102,13 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       const keys = path.split('.');
       const newSettings = { ...prev };
       let current: any = newSettings;
-      
+
       for (let i = 0; i < keys.length - 1; i++) {
         current[keys[i]] = { ...current[keys[i]] };
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = value;
-      
+
       return newSettings;
     });
   };

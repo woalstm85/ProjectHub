@@ -1,25 +1,29 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export enum ActivityType {
+// [수정] enum을 const 객체 + type으로 변경
+export const ActivityType = {
   // 작업 관련
-  TASK_CREATED = 'TASK_CREATED',
-  TASK_UPDATED = 'TASK_UPDATED',
-  TASK_DELETED = 'TASK_DELETED',
-  TASK_STATUS_CHANGED = 'TASK_STATUS_CHANGED',
-  TASK_ASSIGNED = 'TASK_ASSIGNED',
-  
+  TASK_CREATED: 'TASK_CREATED',
+  TASK_UPDATED: 'TASK_UPDATED',
+  TASK_DELETED: 'TASK_DELETED',
+  TASK_STATUS_CHANGED: 'TASK_STATUS_CHANGED',
+  TASK_ASSIGNED: 'TASK_ASSIGNED',
+
   // 프로젝트 관련
-  PROJECT_CREATED = 'PROJECT_CREATED',
-  PROJECT_UPDATED = 'PROJECT_UPDATED',
-  PROJECT_DELETED = 'PROJECT_DELETED',
-  PROJECT_COMPLETED = 'PROJECT_COMPLETED',
-  
+  PROJECT_CREATED: 'PROJECT_CREATED',
+  PROJECT_UPDATED: 'PROJECT_UPDATED',
+  PROJECT_DELETED: 'PROJECT_DELETED',
+  PROJECT_COMPLETED: 'PROJECT_COMPLETED',
+
   // 팀원 관련
-  MEMBER_ADDED = 'MEMBER_ADDED',
-  MEMBER_UPDATED = 'MEMBER_UPDATED',
-  MEMBER_REMOVED = 'MEMBER_REMOVED',
-}
+  MEMBER_ADDED: 'MEMBER_ADDED',
+  MEMBER_UPDATED: 'MEMBER_UPDATED',
+  MEMBER_REMOVED: 'MEMBER_REMOVED',
+} as const;
+
+// ActivityType의 값들을 타입으로 추출
+export type ActivityType = (typeof ActivityType)[keyof typeof ActivityType];
 
 // Activity 인터페이스 - 반드시 export
 export interface Activity {

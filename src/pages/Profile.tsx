@@ -16,7 +16,6 @@ import {
   Progress,
   Statistic,
   Space,
-  Divider,
   Timeline,
   Modal,
 } from 'antd';
@@ -45,7 +44,7 @@ import 'dayjs/locale/ko';
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 const Profile: React.FC = () => {
   const { user, setUser } = useAuthStore();
@@ -66,11 +65,10 @@ const Profile: React.FC = () => {
   const myTasks = memberId ? tasks.filter(t => t.assignee === memberId) : [];
   const completedTasks = myTasks.filter(t => t.status === TaskStatus.DONE);
   const inProgressTasks = myTasks.filter(t => t.status === TaskStatus.IN_PROGRESS);
-  const todoTasks = myTasks.filter(t => t.status === TaskStatus.TODO);
   const reviewTasks = myTasks.filter(t => t.status === TaskStatus.REVIEW);
-  
-  const completionRate = myTasks.length > 0 
-    ? Math.round((completedTasks.length / myTasks.length) * 100) 
+
+  const completionRate = myTasks.length > 0
+    ? Math.round((completedTasks.length / myTasks.length) * 100)
     : 0;
 
   // 마감 임박 작업 (7일 이내)
@@ -556,7 +554,7 @@ const Profile: React.FC = () => {
               <Upload
                 showUploadList={false}
                 beforeUpload={() => false}
-                onChange={(info) => {
+                onChange={() => {
                   message.info('프로필 사진 업로드 기능 (데모)');
                 }}
               >
