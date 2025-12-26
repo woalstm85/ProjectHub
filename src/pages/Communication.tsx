@@ -25,10 +25,9 @@ import {
     SendOutlined,
     DeleteOutlined,
     PushpinFilled,
-    ReadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useNoticeStore, type Notice } from '../store/noticeStore';
+import { useNoticeStore } from '../store/noticeStore';
 import { useMessageStore, type Message } from '../store/messageStore';
 import { useMemberStore } from '../store/memberStore';
 
