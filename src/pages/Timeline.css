@@ -1,0 +1,234 @@
+:root {
+  --primary-color: #3b82f6;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --header-bg: #f8fafc;
+  --grid-line: #f1f5f9;
+}
+
+/* 컨테이너 */
+.timeline-container {
+  background: #fff;
+  border-radius: 8px;
+}
+
+.timeline-wrapper {
+  position: relative;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 테이블 헤더 */
+.timeline-table .ant-table-thead>tr>th {
+  background: var(--header-bg);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.timeline-table .ant-table-thead>tr>th.timeline-header-cell {
+  padding: 0 !important;
+  height: 64px;
+  background: #fff;
+  border-bottom: 1px solid var(--border-color);
+}
+
+/* 헤더: 월(Month) */
+.timeline-header-months {
+  position: relative;
+  height: 32px;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border-color);
+  width: 100%;
+}
+
+.header-month-block {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-right: 1px solid var(--border-color);
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* 헤더: 주(Week) */
+.timeline-header-weeks {
+  position: relative;
+  height: 32px;
+  background: #fff;
+  width: 100%;
+}
+
+.header-week-block {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #94a3b8;
+  border-right: 1px dashed var(--border-color);
+  box-sizing: border-box;
+}
+
+/* --- 바디(Body) 정렬 수정 (핵심) --- */
+
+.timeline-table .ant-table-tbody>tr>td {
+  padding: 10px 16px;
+  /* 상하 패딩을 줄여서 밀도 높임 */
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  /* 수직 중앙 정렬 */
+}
+
+/* 이름 셀 강제 가로 정렬 */
+.name-cell {
+  display: flex !important;
+  flex-direction: row !important;
+  /* 무조건 가로 배치 */
+  align-items: center !important;
+  width: 100%;
+  height: 100%;
+}
+
+/* 확장 아이콘 (+/-) 영역 */
+.expand-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-right: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  /* 찌그러짐 방지 */
+  color: #64748b;
+  transition: color 0.2s;
+}
+
+.expand-icon-wrapper:hover {
+  color: var(--primary-color);
+}
+
+/* 폴더/파일 아이콘 영역 */
+.type-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* 텍스트 영역 */
+.name-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  /* 텍스트 말줄임 처리를 위해 필수 */
+}
+
+/* 테이블 로우 스타일 */
+.timeline-table .project-row {
+  background: #f8fafc;
+}
+
+.timeline-table .task-row {
+  background: #ffffff;
+}
+
+/* 타임라인 바 영역 */
+.timeline-cell-container {
+  position: relative;
+  width: 100%;
+  height: 28px;
+  /* 바 높이에 맞춤 */
+}
+
+/* 바디 그리드 라인 */
+.timeline-body-bg {
+  position: absolute;
+  top: -8px;
+  /* td padding 보정 (padding값과 맞춰야 선이 끊기지 않음) */
+  bottom: -8px;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+.body-grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px dashed var(--grid-line);
+}
+
+/* 타임라인 바 스타일 */
+.timeline-bar-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.timeline-bar {
+  position: absolute;
+  border-radius: 4px;
+  /* 살짝 각지게 */
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 5;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.timeline-bar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+}
+
+.timeline-bar.project {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.timeline-bar.task {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  opacity: 0.9;
+}
+
+.timeline-progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.timeline-label {
+  position: relative;
+  z-index: 10;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding-left: 6px;
+  white-space: nowrap;
+}
