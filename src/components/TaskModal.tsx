@@ -95,7 +95,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                     </Col>
                 </Row>
 
-                <Divider orientation="left" plain>기본 설정</Divider>
+                <Divider plain>기본 설정</Divider>
 
                 <Row gutter={16}>
                     <Col span={12}>
@@ -144,7 +144,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                     </Col>
                 </Row>
 
-                <Divider orientation="left" plain>일정</Divider>
+                <Divider plain>일정</Divider>
 
                 <Row gutter={16}>
                     <Col span={12}>
@@ -173,7 +173,7 @@ const TaskModal: React.FC<TaskModalProps> = ({
                     </Col>
                 </Row>
 
-                <Divider orientation="left" plain>리소스 및 비용</Divider>
+                <Divider plain>리소스 및 비용</Divider>
 
                 <Row gutter={16}>
                     <Col span={8}>

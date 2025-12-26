@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, Menu, theme, Dropdown, Avatar, Space, Typography, Button, Tooltip } from 'antd';
+import { Layout, Menu, theme, Dropdown, Avatar, Space, Button, Tooltip } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   DashboardOutlined,
@@ -24,7 +24,6 @@ import { useSettings } from '../store/settingsStore';
 import NotificationCenter from '../components/NotificationCenter';
 
 const { Header, Sider, Content } = Layout;
-const { Text } = Typography;
 
 // 색상을 HSL로 변환하는 유틸리티
 const hexToHsl = (hex: string): { h: number; s: number; l: number } => {
@@ -55,19 +54,13 @@ const hexToHsl = (hex: string): { h: number; s: number; l: number } => {
 
 // 보조 색상 계산 (색상환에서 조화로운 색상 찾기)
 const getAccentHue = (baseHue: number): number => {
-  // 보라색 계열(270-300)을 보조 색상으로 사용하되, 
-  // 기본 색상과 자연스럽게 블렌딩
   const purpleHue = 270;
-
-  // 기본 색상이 보라색 근처면 청록색으로
   if (baseHue > 240 && baseHue < 300) {
-    return 200; // 청록색
+    return 200;
   }
-  // 기본 색상이 빨강/주황이면 마젠타로
   if (baseHue < 60 || baseHue > 330) {
-    return 320; // 마젠타/핑크
+    return 320;
   }
-  // 그 외에는 보라색
   return purpleHue;
 };
 
@@ -79,7 +72,6 @@ const getSidebarTheme = (primaryColor: string, isDark: boolean) => {
 
   if (isDark) {
     return {
-      // 다크모드: 기본색 + 보조색 블렌딩
       gradientStart: `hsl(${baseHue}, 20%, 13%)`,
       gradientMid: `hsl(${(baseHue + accentHue) / 2}, 18%, 10%)`,
       gradientEnd: `hsl(${accentHue}, 25%, 8%)`,
@@ -91,7 +83,6 @@ const getSidebarTheme = (primaryColor: string, isDark: boolean) => {
     };
   } else {
     return {
-      // 라이트모드: 기본색 + 보조색 블렌딩  
       gradientStart: `hsl(${baseHue}, 35%, 24%)`,
       gradientMid: `hsl(${(baseHue + accentHue) / 2}, 32%, 18%)`,
       gradientEnd: `hsl(${accentHue}, 40%, 14%)`,
@@ -116,7 +107,6 @@ const MainLayout: React.FC = () => {
 
   const isDark = effectiveTheme === 'dark';
 
-  // 테마 색상 기반 사이드바 테마
   const sidebarTheme = useMemo(() =>
     getSidebarTheme(settings.primaryColor, isDark),
     [settings.primaryColor, isDark]
@@ -133,89 +123,27 @@ const MainLayout: React.FC = () => {
   };
 
   const menuItems = [
-    {
-      key: '/',
-      icon: <DashboardOutlined />,
-      label: '대시보드',
-    },
-    {
-      key: '/projects',
-      icon: <ProjectOutlined />,
-      label: '프로젝트',
-    },
-    {
-      key: '/tasks',
-      icon: <CheckSquareOutlined />,
-      label: '작업관리',
-    },
-    {
-      key: '/issues',
-      icon: <BugOutlined />,
-      label: '이슈 트래커',
-    },
-    {
-      key: '/timeline',
-      icon: <ScheduleOutlined />,
-      label: '타임라인',
-    },
-    {
-      key: '/calendar',
-      icon: <CalendarOutlined />,
-      label: '캘린더',
-    },
-    {
-      key: '/activity',
-      icon: <HistoryOutlined />,
-      label: '활동 로그',
-    },
-    {
-      key: '/members',
-      icon: <TeamOutlined />,
-      label: '팀원 관리',
-    },
-    {
-      key: '/reports',
-      icon: <BarChartOutlined />,
-      label: '보고서',
-    },
-    {
-      key: '/communication',
-      icon: <NotificationOutlined />,
-      label: '커뮤니케이션',
-    },
+    { key: '/', icon: <DashboardOutlined />, label: '대시보드' },
+    { key: '/projects', icon: <ProjectOutlined />, label: '프로젝트' },
+    { key: '/tasks', icon: <CheckSquareOutlined />, label: '작업관리' },
+    { key: '/issues', icon: <BugOutlined />, label: '이슈 트래커' },
+    { key: '/timeline', icon: <ScheduleOutlined />, label: '타임라인' },
+    { key: '/calendar', icon: <CalendarOutlined />, label: '캘린더' },
+    { key: '/activity', icon: <HistoryOutlined />, label: '활동 로그' },
+    { key: '/members', icon: <TeamOutlined />, label: '팀원 관리' },
+    { key: '/reports', icon: <BarChartOutlined />, label: '보고서' },
+    { key: '/communication', icon: <NotificationOutlined />, label: '커뮤니케이션' },
   ];
 
   const userMenuItems = [
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: '프로필',
-      onClick: () => navigate('/profile'),
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: '설정',
-      onClick: () => navigate('/settings'),
-    },
-    {
-      type: 'divider' as const,
-    },
-    {
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: '로그아웃',
-      danger: true,
-      onClick: () => {
-        logout();
-        navigate('/login');
-      },
-    },
+    { key: 'profile', icon: <UserOutlined />, label: '프로필', onClick: () => navigate('/profile') },
+    { key: 'settings', icon: <SettingOutlined />, label: '설정', onClick: () => navigate('/settings') },
+    { type: 'divider' as const },
+    { key: 'logout', icon: <LogoutOutlined />, label: '로그아웃', danger: true, onClick: () => { logout(); navigate('/login'); } },
   ];
 
   return (
     <Layout style={{ minHeight: '100vh', background: colors.contentBg }}>
-      {/* 사이드바 */}
       <Sider
         trigger={null}
         collapsible
@@ -235,7 +163,6 @@ const MainLayout: React.FC = () => {
           zIndex: 100,
         }}
       >
-        {/* 로고 영역 */}
         <div
           style={{
             height: 72,
@@ -263,31 +190,21 @@ const MainLayout: React.FC = () => {
           </div>
           {!collapsed && (
             <div style={{ marginLeft: 12, overflow: 'hidden' }}>
-              <div style={{ color: 'white', fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>
-                ProjectHub
-              </div>
-              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>
-                Management System
-              </div>
+              <div style={{ color: 'white', fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>ProjectHub</div>
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11 }}>Management System</div>
             </div>
           )}
         </div>
 
-        {/* 메뉴 */}
         <Menu
           mode="inline"
           selectedKeys={[location.pathname]}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            padding: '16px 12px',
-          }}
+          style={{ background: 'transparent', border: 'none', padding: '16px 12px' }}
           theme="dark"
         />
 
-        {/* 하단 유저 정보 */}
         {!collapsed && (
           <div
             style={{
@@ -311,19 +228,14 @@ const MainLayout: React.FC = () => {
                 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>
-                  {user?.name || '사용자'}
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {user?.email || 'user@example.com'}
-                </div>
+                <div style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>{user?.name || '사용자'}</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis' }}>{user?.email || 'user@example.com'}</div>
               </div>
             </div>
           </div>
         )}
       </Sider>
 
-      {/* 플로팅 토글 버튼 */}
       <div
         onClick={() => setCollapsed(!collapsed)}
         style={{
@@ -353,22 +265,10 @@ const MainLayout: React.FC = () => {
           e.currentTarget.style.borderColor = colors.border;
         }}
       >
-        {collapsed ? (
-          <RightOutlined style={{ fontSize: 12, color: colors.textSecondary }} />
-        ) : (
-          <LeftOutlined style={{ fontSize: 12, color: colors.textSecondary }} />
-        )}
+        {collapsed ? <RightOutlined style={{ fontSize: 12, color: colors.textSecondary }} /> : <LeftOutlined style={{ fontSize: 12, color: colors.textSecondary }} />}
       </div>
 
-      {/* 메인 레이아웃 */}
-      <Layout
-        style={{
-          marginLeft: collapsed ? 80 : 260,
-          transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)',
-          background: colors.contentBg,
-        }}
-      >
-        {/* 헤더 */}
+      <Layout style={{ marginLeft: collapsed ? 80 : 260, transition: 'all 0.3s cubic-bezier(0.2, 0, 0, 1)', background: colors.contentBg }}>
         <Header
           style={{
             padding: '0 32px',
@@ -384,48 +284,21 @@ const MainLayout: React.FC = () => {
           }}
         >
           <div></div>
-
           <Space size={8}>
             <Tooltip title="검색">
-              <Button
-                type="text"
-                icon={<SearchOutlined />}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: 8,
-                  color: colors.textSecondary,
-                }}
-              />
+              <Button type="text" icon={<SearchOutlined />} style={{ width: 40, height: 40, borderRadius: 8, color: colors.textSecondary }} />
             </Tooltip>
             <NotificationCenter />
             <div style={{ width: 1, height: 24, background: colors.border, margin: '0 8px' }} />
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
               <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  cursor: 'pointer',
-                  padding: '6px 12px',
-                  borderRadius: 8,
-                  transition: 'all 0.2s',
-                }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '6px 12px', borderRadius: 8, transition: 'all 0.2s' }}
                 onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? '#1f1f1f' : '#f7fafc')}
                 onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
               >
-                <Avatar
-                  size={36}
-                  icon={<UserOutlined />}
-                  src={user?.avatar}
-                  style={{
-                    background: `linear-gradient(135deg, ${settings.primaryColor} 0%, ${sidebarTheme.secondaryColor} 100%)`,
-                  }}
-                />
+                <Avatar size={36} icon={<UserOutlined />} src={user?.avatar} style={{ background: `linear-gradient(135deg, ${settings.primaryColor} 0%, ${sidebarTheme.secondaryColor} 100%)` }} />
                 <div style={{ lineHeight: 1.2 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>
-                    {user?.name || '사용자'}
-                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>{user?.name || '사용자'}</div>
                   <div style={{ fontSize: 11, color: colors.textSecondary }}>관리자</div>
                 </div>
               </div>
@@ -433,105 +306,27 @@ const MainLayout: React.FC = () => {
           </Space>
         </Header>
 
-        {/* 콘텐츠 영역 */}
-        <Content
-          style={{
-            margin: 24,
-            minHeight: 'calc(100vh - 64px - 48px)',
-          }}
-        >
-          <div
-            style={{
-              padding: 28,
-              minHeight: '100%',
-              background: colors.cardBg,
-              borderRadius: borderRadiusLG,
-              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
-            }}
-          >
+        <Content style={{ margin: 24, minHeight: 'calc(100vh - 64px - 48px)' }}>
+          <div style={{ padding: 28, minHeight: '100%', background: colors.cardBg, borderRadius: borderRadiusLG, boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)' }}>
             <Outlet />
           </div>
         </Content>
       </Layout>
 
-      {/* 커스텀 스타일 - 테마 색상 기반 */}
       <style>{`
-        /* 사이드바 메뉴 스타일 */
-        .ant-layout-sider .ant-menu-dark {
-          background: transparent !important;
-        }
-        
-        .ant-layout-sider .ant-menu-dark .ant-menu-item {
-          margin: 4px 0;
-          padding-left: 16px !important;
-          border-radius: 8px;
-          height: 44px;
-          line-height: 44px;
-          color: rgba(255, 255, 255, 0.7);
-          transition: all 0.2s;
-        }
-        
-        .ant-layout-sider .ant-menu-dark .ant-menu-item:hover {
-          background: ${sidebarTheme.hoverBg} !important;
-          color: #ffffff;
-        }
-        
-        .ant-layout-sider .ant-menu-dark .ant-menu-item-selected {
-          background: ${sidebarTheme.selectedBg} !important;
-          color: #ffffff !important;
-          font-weight: 500;
-          position: relative;
-        }
-        
-        .ant-layout-sider .ant-menu-dark .ant-menu-item-selected::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          top: 8px;
-          bottom: 8px;
-          width: 3px;
-          background: linear-gradient(180deg, ${settings.primaryColor} 0%, ${sidebarTheme.secondaryColor} 100%);
-          border-radius: 0 2px 2px 0;
-          box-shadow: 0 0 8px ${settings.primaryColor}88;
-        }
-        
-        .ant-layout-sider .ant-menu-dark .ant-menu-item .anticon {
-          font-size: 18px;
-          transition: all 0.2s;
-        }
-        
-        .ant-layout-sider .ant-menu-dark .ant-menu-item-selected .anticon {
-          color: ${settings.primaryColor};
-          filter: drop-shadow(0 0 4px ${settings.primaryColor}66);
-        }
-
-        /* 스크롤바 스타일 */
-        .ant-layout-sider::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .ant-layout-sider::-webkit-scrollbar-thumb {
-          background: ${settings.primaryColor}44;
-          border-radius: 3px;
-        }
-        
-        .ant-layout-sider::-webkit-scrollbar-thumb:hover {
-          background: ${settings.primaryColor}66;
-        }
-        
-        .ant-layout-sider::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        /* 접힌 상태 메뉴 스타일 */
-        .ant-layout-sider-collapsed .ant-menu-item {
-          padding-left: 24px !important;
-          justify-content: center;
-        }
-        
-        .ant-layout-sider-collapsed .ant-menu-item-selected::before {
-          display: none;
-        }
+        .ant-layout-sider .ant-menu-dark { background: transparent !important; }
+        .ant-layout-sider .ant-menu-dark .ant-menu-item { margin: 4px 0; padding-left: 16px !important; border-radius: 8px; height: 44px; line-height: 44px; color: rgba(255, 255, 255, 0.7); transition: all 0.2s; }
+        .ant-layout-sider .ant-menu-dark .ant-menu-item:hover { background: ${sidebarTheme.hoverBg} !important; color: #ffffff; }
+        .ant-layout-sider .ant-menu-dark .ant-menu-item-selected { background: ${sidebarTheme.selectedBg} !important; color: #ffffff !important; font-weight: 500; position: relative; }
+        .ant-layout-sider .ant-menu-dark .ant-menu-item-selected::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: linear-gradient(180deg, ${settings.primaryColor} 0%, ${sidebarTheme.secondaryColor} 100%); border-radius: 0 2px 2px 0; box-shadow: 0 0 8px ${settings.primaryColor}88; }
+        .ant-layout-sider .ant-menu-dark .ant-menu-item .anticon { font-size: 18px; transition: all 0.2s; }
+        .ant-layout-sider .ant-menu-dark .ant-menu-item-selected .anticon { color: ${settings.primaryColor}; filter: drop-shadow(0 0 4px ${settings.primaryColor}66); }
+        .ant-layout-sider::-webkit-scrollbar { width: 6px; }
+        .ant-layout-sider::-webkit-scrollbar-thumb { background: ${settings.primaryColor}44; border-radius: 3px; }
+        .ant-layout-sider::-webkit-scrollbar-thumb:hover { background: ${settings.primaryColor}66; }
+        .ant-layout-sider::-webkit-scrollbar-track { background: transparent; }
+        .ant-layout-sider-collapsed .ant-menu-item { padding-left: 24px !important; justify-content: center; }
+        .ant-layout-sider-collapsed .ant-menu-item-selected::before { display: none; }
       `}</style>
     </Layout>
   );

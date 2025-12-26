@@ -205,9 +205,9 @@ const IssueModal: React.FC<IssueModalProps> = ({
 
         {issueType === IssueType.BUG && (
           <>
-            <Divider orientation="left" style={{ fontSize: 14 }}>버그 상세 정보</Divider>
+            <Divider plain style={{ fontSize: 14 }}>버그 상세 정보</Divider>
             <Form.Item name="stepsToReproduce" label="재현 방법">
-              <TextArea rows={3} placeholder="1. 첫 번째 단계&#10;2. 두 번째 단계&#10;3. 세 번째 단계" />
+              <TextArea rows={3} placeholder={'1. 첫 번째 단계\n2. 두 번째 단계\n3. 세 번째 단계'} />
             </Form.Item>
             <Row gutter={16}>
               <Col span={12}>
