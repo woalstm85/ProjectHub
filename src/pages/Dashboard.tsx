@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Row, Col, Card, Statistic, Progress, List, Tag, Typography, Avatar, Space, Button, theme, Timeline, Empty } from 'antd';
+import { Row, Col, Card, Statistic, List, Tag, Typography, Avatar, Space, Button, theme, Empty } from 'antd';
 import {
   ProjectOutlined,
   CheckCircleOutlined,
@@ -12,9 +12,8 @@ import {
   UserAddOutlined,
   ThunderboltOutlined,
   CheckSquareOutlined,
-  RightOutlined,
 } from '@ant-design/icons';
-import { useProjectStore, ProjectStatus, type CreateProjectDTO } from '../store/projectStore';
+import { useProjectStore, ProjectStatus } from '../store/projectStore';
 import { useTaskStore, TaskStatus, TaskPriority } from '../store/taskStore';
 import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
@@ -46,7 +45,6 @@ const Dashboard: React.FC = () => {
 
   const isDark = effectiveTheme === 'dark';
 
-  // 다크모드 색상 및 스타일
   const colors = {
     text: isDark ? '#ffffff' : '#262626',
     textSecondary: isDark ? '#a0a0a0' : '#8c8c8c',
@@ -101,7 +99,7 @@ const Dashboard: React.FC = () => {
     { name: '진행중', value: activeProjects, color: '#1890ff' },
     { name: '완료', value: completedProjects, color: '#52c41a' },
     { name: '계획', value: projects.filter(p => p.status === ProjectStatus.PLANNING).length, color: '#8c8c8c' },
-    { name: '보류/취소', value: projects.filter(p => [ProjectStatus.ON_HOLD, ProjectStatus.CANCELLED].includes(p.status)).length, color: '#ff4d4f' },
+    { name: '보류/취소', value: projects.filter(p => p.status === ProjectStatus.ON_HOLD || p.status === ProjectStatus.CANCELLED).length, color: '#ff4d4f' },
   ].filter(item => item.value > 0);
 
   // 팀원별 업무 부하 데이터
@@ -187,6 +185,18 @@ const Dashboard: React.FC = () => {
     [TaskPriority.URGENT]: 'red',
   };
 
+  // --- Activity Type Label ---
+  const getActivityLabel = (type: ActivityType): string => {
+    switch (type) {
+      case ActivityType.TASK_CREATED: return '새 작업을 생성했습니다: ';
+      case ActivityType.TASK_STATUS_CHANGED: return '작업 상태를 변경했습니다: ';
+      case ActivityType.TASK_UPDATED: return '작업을 수정했습니다: ';
+      case ActivityType.PROJECT_CREATED: return '새 프로젝트를 생성했습니다: ';
+      case ActivityType.PROJECT_COMPLETED: return '프로젝트를 완료했습니다: ';
+      default: return '활동을 수행했습니다: ';
+    }
+  };
+
   // --- Helper Components ---
   const MetricCard = ({ title, value, prefix, suffix, color, subTitle, subValue }: any) => (
     <Card
@@ -238,8 +248,8 @@ const Dashboard: React.FC = () => {
             style={{
               ...commonCardStyle,
               background: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryActive} 100%)`,
-              border: 'none', // Override border for gradient card
-              boxShadow: '0 4px 16px rgba(24, 144, 255, 0.2)', // Custom shadow for primary card
+              border: 'none',
+              boxShadow: '0 4px 16px rgba(24, 144, 255, 0.2)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff' }}>
@@ -428,10 +438,7 @@ const Dashboard: React.FC = () => {
                         }
                         description={
                           <span>
-                            {activity.type === ActivityType.TASK_CREATED ? '새 작업을 생성했습니다: ' :
-                              activity.type === ActivityType.TASK_COMPLETED ? '작업을 완료했습니다: ' :
-                                activity.type === ActivityType.PROJECT_CREATED ? '새 프로젝트를 생성했습니다: ' :
-                                  '활동을 수행했습니다: '}
+                            {getActivityLabel(activity.type)}
                             <Text strong>{activity.taskName || activity.projectName}</Text>
                           </span>
                         }

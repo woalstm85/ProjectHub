@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Card, Typography, Space, Tag, Avatar, Select, Empty, Button, Tooltip, Segmented, Input, DatePicker } from 'antd';
+import { Typography, Space, Tag, Select, Empty, Button, Segmented, Input, DatePicker } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import {
   PlusCircleOutlined,
@@ -20,7 +20,6 @@ import {
 import type { Activity } from '../store/activityStore';
 import { useActivityStore, ActivityType, getActivityMessage, getActivityColor } from '../store/activityStore';
 import { useProjectStore } from '../store/projectStore';
-import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
@@ -69,7 +68,6 @@ const ActivityIcon: React.FC<{ type: ActivityType }> = ({ type }) => {
 const ActivityLog: React.FC = () => {
   const { activities, clearActivities } = useActivityStore();
   const { projects } = useProjectStore();
-  const { members } = useMemberStore();
   const { effectiveTheme, settings } = useSettings();
   const navigate = useNavigate();
 
@@ -142,17 +140,6 @@ const ActivityLog: React.FC = () => {
 
     return groups;
   }, [filteredActivities]);
-
-  // 날짜 라벨
-  const getDateLabel = (dateStr: string): string => {
-    const date = dayjs(dateStr);
-    const today = dayjs().startOf('day');
-    const yesterday = today.subtract(1, 'day');
-
-    if (date.isSame(today, 'day')) return '오늘';
-    if (date.isSame(yesterday, 'day')) return '어제';
-    return date.format('M월 D일 dddd');
-  };
 
   // 시간 포맷
   const formatTime = (timestamp: Date): string => {
@@ -355,7 +342,7 @@ const ActivityLog: React.FC = () => {
                 }} />
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                  {dateActivities.map((activity, index) => {
+                  {dateActivities.map((activity,) => {
                     const color = getActivityColor(activity.type);
                     const message = getActivityMessage(activity);
 
