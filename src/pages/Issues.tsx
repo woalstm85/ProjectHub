@@ -4,13 +4,13 @@ import {
 } from 'antd';
 import {
   PlusOutlined, SearchOutlined, BugOutlined, BulbOutlined, RiseOutlined, QuestionCircleOutlined, CheckSquareOutlined,
-  DeleteOutlined, EyeOutlined, FilterOutlined, AppstoreOutlined, BarsOutlined, ExclamationCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, SyncOutlined,
+  DeleteOutlined, AppstoreOutlined, BarsOutlined, ExclamationCircleOutlined, CheckCircleOutlined, ClockCircleOutlined, SyncOutlined, FireOutlined, AreaChartOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/ko';
 import {
-  useIssueStore, IssueType, IssueStatus, IssuePriority, type Issue,
+  useIssueStore, IndustryType, IssueType, IssueStatus, IssuePriority, type Issue,
   getIssueTypeLabel, getIssueTypeColor, getIssueStatusLabel, getIssueStatusColor, getIssuePriorityLabel, getIssuePriorityColor,
 } from '../store/issueStore';
 import { useProjectStore } from '../store/projectStore';
@@ -18,6 +18,11 @@ import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
 import IssueModal from '../components/IssueModal';
 import IssueDetailModal from '../components/IssueDetailModal';
+
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  PieChart, Pie, Cell
+} from 'recharts';
 
 dayjs.extend(relativeTime);
 dayjs.locale('ko');
@@ -27,10 +32,10 @@ const { Title, Text } = Typography;
 type ViewMode = 'LIST' | 'BOARD';
 
 const Issues: React.FC = () => {
-  const { issues, labels, addIssue, updateIssue, deleteIssue } = useIssueStore();
+  const { industry, setIndustry, issues, labels, addIssue, updateIssue, deleteIssue } = useIssueStore();
   const { projects } = useProjectStore();
   const { members } = useMemberStore();
-  const { effectiveTheme, settings } = useSettings();
+  const { effectiveTheme } = useSettings();
 
   const [viewMode, setViewMode] = useState<ViewMode>('LIST');
   const [searchText, setSearchText] = useState('');
@@ -38,41 +43,71 @@ const Issues: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<IssueStatus | 'ALL'>('ALL');
   const [filterPriority, setFilterPriority] = useState<IssuePriority | 'ALL'>('ALL');
   const [filterProject, setFilterProject] = useState<string>('ALL');
-  const [filterAssignee, setFilterAssignee] = useState<string>('ALL');
+  const [filterMyIssues, setFilterMyIssues] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
 
+  // Bulk Selection
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [showAnalytics, setShowAnalytics] = useState(false);
+
   const isDark = effectiveTheme === 'dark';
+
+  // Analytics Data
+  const trendData = useMemo(() => {
+    const last7Days = Array.from({ length: 7 }, (_, i) => dayjs().subtract(6 - i, 'day').format('MM-DD'));
+    return last7Days.map(date => {
+      const dayIssues = issues.filter(i => dayjs(i.createdAt).format('MM-DD') === date);
+      return {
+        date,
+        total: dayIssues.length,
+        solved: dayIssues.filter(i => i.status === IssueStatus.RESOLVED || i.status === IssueStatus.CLOSED).length,
+      };
+    });
+  }, [issues]);
+
+  const typeDistribution = useMemo(() => {
+    return Object.values(IssueType).map(type => ({
+      name: getIssueTypeLabel(type),
+      value: issues.filter(i => i.type === type).length,
+    }));
+  }, [issues]);
+
   const colors = {
     cardBg: isDark ? '#1f1f1f' : '#ffffff',
     text: isDark ? '#ffffff' : '#262626',
     textSecondary: isDark ? '#a0a0a0' : '#8c8c8c',
     border: isDark ? '#303030' : '#f0f0f0',
     columnBg: isDark ? '#141414' : '#f5f5f5',
+    primary: isDark ? '#177ddc' : '#1890ff',
   };
 
   const filteredIssues = useMemo(() => {
     return issues.filter((issue) => {
-      if (searchText && !issue.title.toLowerCase().includes(searchText.toLowerCase())) return false;
+      if (searchText && !issue.title.toLowerCase().includes(searchText.toLowerCase()) && !issue.metadata?.lineId?.toLowerCase().includes(searchText.toLowerCase())) return false;
       if (filterType !== 'ALL' && issue.type !== filterType) return false;
       if (filterStatus !== 'ALL' && issue.status !== filterStatus) return false;
       if (filterPriority !== 'ALL' && issue.priority !== filterPriority) return false;
       if (filterProject !== 'ALL' && issue.projectId !== filterProject) return false;
-      if (filterAssignee !== 'ALL' && issue.assigneeId !== filterAssignee) return false;
+      if (filterMyIssues && issue.assigneeId !== 'member-1') return false; // member-1 is the current user
       return true;
     });
-  }, [issues, searchText, filterType, filterStatus, filterPriority, filterProject, filterAssignee]);
+  }, [issues, searchText, filterType, filterStatus, filterPriority, filterProject, filterMyIssues]);
 
   const stats = useMemo(() => {
+    const total = issues.length;
     const open = issues.filter((i) => i.status === IssueStatus.OPEN || i.status === IssueStatus.REOPENED).length;
     const inProgress = issues.filter((i) => i.status === IssueStatus.IN_PROGRESS).length;
-    const resolved = issues.filter((i) => i.status === IssueStatus.RESOLVED).length;
-    const bugs = issues.filter((i) => i.type === IssueType.BUG).length;
+    const resolved = issues.filter((i) => i.status === IssueStatus.RESOLVED || i.status === IssueStatus.CLOSED).length;
+    const bugs = issues.filter((i) => i.type === IssueType.BUG || i.type === IssueType.DEFECT).length;
     const critical = issues.filter((i) => i.priority === IssuePriority.CRITICAL && i.status !== IssueStatus.CLOSED).length;
-    return { open, inProgress, resolved, bugs, critical, total: issues.length };
+
+    const resolveRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+
+    return { open, inProgress, resolved, bugs, critical, total, resolveRate };
   }, [issues]);
 
   const getTypeIcon = (type: IssueType) => {
@@ -83,13 +118,45 @@ const Issues: React.FC = () => {
       case IssueType.IMPROVEMENT: return <RiseOutlined style={style} />;
       case IssueType.QUESTION: return <QuestionCircleOutlined style={style} />;
       case IssueType.TASK: return <CheckSquareOutlined style={style} />;
+      case IssueType.DEFECT: return <ExclamationCircleOutlined style={style} />;
+      case IssueType.EQUIPMENT: return <SyncOutlined style={style} />;
+      case IssueType.SAFETY: return <FireOutlined style={{ color: '#f5222d' }} />;
+      case IssueType.QUALITY: return <CheckCircleOutlined style={style} />;
     }
   };
+
+  const industryConfig = {
+    [IndustryType.SOFTWARE]: {
+      title: '소프트웨어 이슈 트래커',
+      subtitle: '팀의 기술적 이슈와 피드백을 한 곳에서 관리하세요',
+      bugLabel: '버그',
+      bugIcon: <BugOutlined />,
+    },
+    [IndustryType.MANUFACTURING]: {
+      title: '제조 공정 이슈 트래커',
+      subtitle: '생산 라인, 품질 결함 및 설비 이슈를 통합 관리하세요',
+      bugLabel: '결함/장애',
+      bugIcon: <ExclamationCircleOutlined />,
+    },
+    [IndustryType.SERVICE]: {
+      title: '서비스 서비스 데스크',
+      subtitle: '고객 요청 및 서비스 품질 이슈를 관리하세요',
+      bugLabel: '불만/오류',
+      bugIcon: <QuestionCircleOutlined />,
+    },
+    [IndustryType.GENERAL]: {
+      title: '범용 이슈 트래커',
+      subtitle: '다양한 분야의 현안과 이슈를 체계적으로 관리하세요',
+      bugLabel: '일반 이슈',
+      bugIcon: <BarsOutlined />,
+    },
+  };
+
+  const config = industryConfig[industry];
 
   const handleAdd = () => { setEditingIssue(null); setIsModalOpen(true); };
 
   const handleSave = (values: any) => {
-    const currentUser = members[0];
     const assignee = members.find((m) => m.id === values.assigneeId);
     if (editingIssue) {
       updateIssue(editingIssue.id, { ...values, assigneeName: assignee?.name });
@@ -97,8 +164,8 @@ const Issues: React.FC = () => {
     } else {
       addIssue({
         ...values,
-        reporterId: currentUser?.id || 'unknown',
-        reporterName: currentUser?.name || '사용자',
+        reporterId: 'member-1', // 임시 사용자 ID (auth 연동 전)
+        reporterName: '관리자',
         assigneeName: assignee?.name,
         labels: values.labels || [],
       });
@@ -107,7 +174,26 @@ const Issues: React.FC = () => {
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string) => { deleteIssue(id); message.success('이슈가 삭제되었습니다.'); };
+  const handleDelete = (id: string) => {
+    deleteIssue(id);
+    setSelectedRowKeys(prev => prev.filter(k => k !== id));
+    message.success('이슈가 삭제되었습니다.');
+  };
+
+  const handleBulkDelete = () => {
+    const ids = selectedRowKeys.map(k => k.toString());
+    useIssueStore.getState().bulkDeleteIssues(ids);
+    setSelectedRowKeys([]);
+    message.success(`${ids.length}개의 이슈가 삭제되었습니다.`);
+  };
+
+  const handleBulkStatusChange = (status: IssueStatus) => {
+    const ids = selectedRowKeys.map(k => k.toString());
+    useIssueStore.getState().bulkUpdateIssues(ids, { status });
+    setSelectedRowKeys([]);
+    message.success(`${ids.length}개의 이슈 상태가 변경되었습니다.`);
+  };
+
   const handleView = (issue: Issue) => { setSelectedIssue(issue); setIsDetailOpen(true); };
   const handleEdit = (issue: Issue) => { setEditingIssue(issue); setIsDetailOpen(false); setIsModalOpen(true); };
 
@@ -121,11 +207,14 @@ const Issues: React.FC = () => {
       render: (title: string, record: Issue) => {
         const issueLabels = labels.filter((l) => record.labels.includes(l.id));
         return (
-          <div>
-            <a onClick={() => handleView(record)} style={{ fontWeight: 500, color: colors.text }}>{title}</a>
+          <div style={{ cursor: 'pointer' }} onClick={() => handleView(record)}>
+            <Text strong style={{ color: colors.text }}>{title}</Text>
+            {record.metadata?.lineId && (
+              <Tag style={{ marginLeft: 8, fontSize: 10 }}>Line: {record.metadata.lineId}</Tag>
+            )}
             <div style={{ marginTop: 4 }}>
               {issueLabels.map((label) => (
-                <Tag key={label.id} style={{ fontSize: 10, padding: '0 6px', background: `${label.color}15`, color: label.color, border: 'none' }}>{label.name}</Tag>
+                <Tag key={label.id} style={{ fontSize: 10, padding: '0 6px', background: `${label.color}10`, color: label.color, borderRadius: 10, border: `1px solid ${label.color}30` }}>{label.name}</Tag>
               ))}
             </div>
           </div>
@@ -134,11 +223,17 @@ const Issues: React.FC = () => {
     },
     {
       title: '상태', dataIndex: 'status', key: 'status', width: 100,
-      render: (status: IssueStatus) => <Tag style={{ background: `${getIssueStatusColor(status)}15`, color: getIssueStatusColor(status), border: 'none' }}>{getIssueStatusLabel(status)}</Tag>,
+      render: (status: IssueStatus) => (
+        <Badge color={getIssueStatusColor(status)} text={<span style={{ color: colors.textSecondary }}>{getIssueStatusLabel(status)}</span>} />
+      ),
     },
     {
       title: '우선순위', dataIndex: 'priority', key: 'priority', width: 90,
-      render: (priority: IssuePriority) => <Tag style={{ background: `${getIssuePriorityColor(priority)}15`, color: getIssuePriorityColor(priority), border: 'none' }}>{getIssuePriorityLabel(priority)}</Tag>,
+      render: (priority: IssuePriority) => (
+        <Tag color={getIssuePriorityColor(priority)} bordered={false} style={{ borderRadius: 4 }}>
+          {getIssuePriorityLabel(priority)}
+        </Tag>
+      ),
     },
     {
       title: '프로젝트', dataIndex: 'projectId', key: 'projectId', width: 150,
@@ -146,21 +241,18 @@ const Issues: React.FC = () => {
     },
     {
       title: '담당자', dataIndex: 'assigneeName', key: 'assignee', width: 120,
-      render: (name: string) => name ? <Space><Avatar size="small" style={{ backgroundColor: settings.primaryColor }}>{name[0]}</Avatar><span>{name}</span></Space> : <Text type="secondary">미지정</Text>,
+      render: (name: string) => name ? <Space><Avatar size="small" style={{ backgroundColor: isDark ? '#434343' : '#bae7ff', color: isDark ? '#bfbfbf' : '#096dd9' }}>{name[0]}</Avatar><span style={{ color: colors.textSecondary }}>{name}</span></Space> : <Text type="secondary">미지정</Text>,
     },
     {
       title: '생성일', dataIndex: 'createdAt', key: 'createdAt', width: 100,
       render: (date: Date) => <Tooltip title={dayjs(date).format('YYYY-MM-DD HH:mm')}><Text style={{ color: colors.textSecondary, fontSize: 12 }}>{dayjs(date).fromNow()}</Text></Tooltip>,
     },
     {
-      title: '', key: 'actions', width: 80,
+      title: '', key: 'actions', width: 60,
       render: (_: any, record: Issue) => (
-        <Space>
-          <Tooltip title="상세보기"><Button type="text" size="small" icon={<EyeOutlined />} onClick={() => handleView(record)} /></Tooltip>
-          <Popconfirm title="이슈 삭제" description="정말 삭제하시겠습니까?" onConfirm={() => handleDelete(record.id)} okText="삭제" cancelText="취소">
-            <Button type="text" size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
+        <Popconfirm title="이슈 삭제" description="정말 삭제하시겠습니까?" onConfirm={() => handleDelete(record.id)} okText="삭제" cancelText="취소">
+          <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
       ),
     },
   ];
@@ -188,24 +280,41 @@ const Issues: React.FC = () => {
                   const issueLabels = labels.filter((l) => issue.labels.includes(l.id));
                   return (
                     <Card key={issue.id} size="small" hoverable onClick={() => handleView(issue)}
-                      style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderLeft: `4px solid ${getIssueTypeColor(issue.type)}` }}
+                      style={{
+                        background: colors.cardBg,
+                        border: `1px solid ${colors.border}`,
+                        borderLeft: `4px solid ${getIssueTypeColor(issue.type)}`,
+                        borderRadius: 12,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                      }}
                       styles={{ body: { padding: 12 } }}>
-                      <div style={{ marginBottom: 8 }}>
+                      <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
                         <Space size={4}>
                           {getTypeIcon(issue.type)}
-                          <Tag style={{ fontSize: 10, padding: '0 4px', background: `${getIssuePriorityColor(issue.priority)}15`, color: getIssuePriorityColor(issue.priority), border: 'none' }}>{getIssuePriorityLabel(issue.priority)}</Tag>
+                          <Tag style={{ fontSize: 10, padding: '0 4px', background: `${getIssuePriorityColor(issue.priority)}15`, color: getIssuePriorityColor(issue.priority), border: 'none', borderRadius: 4 }}>{getIssuePriorityLabel(issue.priority)}</Tag>
                         </Space>
+                        <Text type="secondary" style={{ fontSize: 10 }}>#{issue.id.split('-').pop()}</Text>
                       </div>
-                      <Text strong style={{ display: 'block', marginBottom: 8, color: colors.text, fontSize: 13 }} ellipsis={{ tooltip: issue.title }}>{issue.title}</Text>
+                      <Text strong style={{ display: 'block', marginBottom: 4, color: colors.text, fontSize: 13 }} ellipsis={{ tooltip: issue.title }}>{issue.title}</Text>
+                      {issue.metadata?.lineId && (
+                        <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 2 }}>Line: {issue.metadata.lineId}</Text>
+                      )}
+                      <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8 }}>{projects.find(p => p.id === issue.projectId)?.name}</Text>
+
                       {issueLabels.length > 0 && (
-                        <div style={{ marginBottom: 8 }}>
-                          {issueLabels.slice(0, 2).map((label) => <Tag key={label.id} style={{ fontSize: 10, padding: '0 4px', background: `${label.color}15`, color: label.color, border: 'none' }}>{label.name}</Tag>)}
-                          {issueLabels.length > 2 && <Tag style={{ fontSize: 10, padding: '0 4px' }}>+{issueLabels.length - 2}</Tag>}
+                        <div style={{ marginBottom: 12 }}>
+                          {issueLabels.slice(0, 2).map((label) => <Tag key={label.id} style={{ fontSize: 9, padding: '0 4px', background: `${label.color}10`, color: label.color, border: `1px solid ${label.color}20`, borderRadius: 10 }}>{label.name}</Tag>)}
+                          {issueLabels.length > 2 && <Tag style={{ fontSize: 9, padding: '0 4px', borderRadius: 10 }}>+{issueLabels.length - 2}</Tag>}
                         </div>
                       )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        {issue.assigneeName ? <Avatar size="small" style={{ backgroundColor: settings.primaryColor }}>{issue.assigneeName[0]}</Avatar> : <Avatar size="small" icon={<BugOutlined />} />}
-                        <Text style={{ fontSize: 11, color: colors.textSecondary }}>{dayjs(issue.createdAt).fromNow()}</Text>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${colors.border}`, paddingTop: 8 }}>
+                        {issue.assigneeName ? (
+                          <Space size={4}>
+                            <Avatar size={18} style={{ backgroundColor: isDark ? '#434343' : '#bae7ff', color: isDark ? '#bfbfbf' : '#096dd9', fontSize: 10 }}>{issue.assigneeName[0]}</Avatar>
+                            <Text style={{ fontSize: 11, color: colors.textSecondary }}>{issue.assigneeName}</Text>
+                          </Space>
+                        ) : <Avatar size={18} icon={<QuestionCircleOutlined />} />}
+                        <Text style={{ fontSize: 10, color: colors.textSecondary }}>{dayjs(issue.createdAt).fromNow()}</Text>
                       </div>
                     </Card>
                   );
@@ -219,59 +328,197 @@ const Issues: React.FC = () => {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div>
-            <Title level={2} style={{ margin: 0 }}>이슈 트래커</Title>
-            <Text type="secondary">버그, 기능 요청, 개선 사항을 추적하고 관리합니다</Text>
-          </div>
-          <Button type="primary" icon={<PlusOutlined />} size="large" onClick={handleAdd}>새 이슈</Button>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 24 }}>
+      {/* Header section with Industry Selector */}
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <Title level={2} style={{ margin: 0 }}>{config.title}</Title>
+          <Text type="secondary">{config.subtitle}</Text>
         </div>
-        <Row gutter={16}>
-          {[
-            { title: '전체', value: stats.total, color: colors.text },
-            { title: '열림', value: stats.open, color: '#1890ff' },
-            { title: '진행중', value: stats.inProgress, color: '#faad14' },
-            { title: '해결됨', value: stats.resolved, color: '#52c41a' },
-            { title: '버그', value: stats.bugs, color: '#f5222d', prefix: <BugOutlined /> },
-            { title: '긴급', value: stats.critical, color: '#ff4d4f', prefix: <ExclamationCircleOutlined /> },
-          ].map((stat, idx) => (
-            <Col span={4} key={idx}>
-              <Card size="small" style={{ background: colors.cardBg, borderColor: colors.border }}>
-                <Statistic title={<Text style={{ color: colors.textSecondary }}>{stat.title}</Text>} value={stat.value} prefix={stat.prefix} valueStyle={{ color: stat.color }} />
-              </Card>
-            </Col>
-          ))}
-        </Row>
+        <Space size="middle">
+          <Select
+            value={industry}
+            onChange={setIndustry}
+            style={{ width: 160 }}
+            options={[
+              { value: IndustryType.SOFTWARE, label: '소프트웨어 IT' },
+              { value: IndustryType.MANUFACTURING, label: '제조 및 생산' },
+              { value: IndustryType.SERVICE, label: '서비스 데스크' },
+              { value: IndustryType.GENERAL, label: '일반 업무' },
+            ]}
+          />
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>새 이슈 등록</Button>
+        </Space>
       </div>
 
-      <Card style={{ marginBottom: 16, background: colors.cardBg, border: `1px solid ${colors.border}` }} styles={{ body: { padding: '12px 16px' } }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <Space wrap>
-            <Input prefix={<SearchOutlined style={{ color: colors.textSecondary }} />} placeholder="이슈 검색..." style={{ width: 200 }} value={searchText} onChange={(e) => setSearchText(e.target.value)} allowClear />
-            <div style={{ width: 1, height: 24, background: colors.border }} />
-            <FilterOutlined style={{ color: colors.textSecondary }} />
-            <Select value={filterType} onChange={setFilterType} style={{ width: 120 }} options={[{ value: 'ALL', label: '전체 타입' }, ...Object.values(IssueType).map((t) => ({ value: t, label: getIssueTypeLabel(t) }))]} />
-            <Select value={filterStatus} onChange={setFilterStatus} style={{ width: 120 }} options={[{ value: 'ALL', label: '전체 상태' }, ...Object.values(IssueStatus).map((s) => ({ value: s, label: getIssueStatusLabel(s) }))]} />
-            <Select value={filterPriority} onChange={setFilterPriority} style={{ width: 130 }} options={[{ value: 'ALL', label: '전체 우선순위' }, ...Object.values(IssuePriority).map((p) => ({ value: p, label: getIssuePriorityLabel(p) }))]} />
-            <Select value={filterProject} onChange={setFilterProject} style={{ width: 150 }} options={[{ value: 'ALL', label: '전체 프로젝트' }, ...projects.map((p) => ({ value: p.id, label: p.name }))]} />
-            <Select value={filterAssignee} onChange={setFilterAssignee} style={{ width: 130 }} options={[{ value: 'ALL', label: '전체 담당자' }, ...members.map((m) => ({ value: m.id, label: m.name }))]} />
+      {/* Stats Summary Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        {[
+          { title: '전체', value: stats.total, icon: <BarsOutlined />, color: colors.textSecondary },
+          { title: '활성', value: stats.open + stats.inProgress, icon: <ExclamationCircleOutlined />, color: '#1890ff' },
+          { title: config.bugLabel, value: stats.bugs, icon: config.bugIcon, color: '#f5222d' }, // Use industry specific icon
+          { title: '긴급', value: stats.critical, icon: <FireOutlined />, color: '#cf1322' },
+        ].map((s, i) => (
+          <Col span={6} key={i}>
+            <Card style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+              <Statistic title={s.title} value={s.value} prefix={s.icon} valueStyle={{ color: s.color, fontWeight: 700 }} />
+            </Card>
+          </Col>
+        ))}
+      </Row>
+
+      {/* Analytics Visualization Section */}
+      {showAnalytics && (
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col span={16}>
+            <Card title="이슈 트렌드" size="small" style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={trendData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="date" />
+                    <YAxis />
+                    <RechartsTooltip />
+                    <Area type="monotone" dataKey="total" name="발생" stroke={colors.primary} fill={colors.primary} fillOpacity={0.1} />
+                    <Area type="monotone" dataKey="solved" name="해결" stroke="#52c41a" strokeDasharray="5 5" fillOpacity={0} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card title="유형 분포" size="small" style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+              <div style={{ height: 200 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={typeDistribution} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} fill={colors.primary}>
+                      {typeDistribution.map((_, i) => <Cell key={i} fill={['#f5222d', '#722ed1', '#1890ff', '#faad14', '#52c41a', '#eb2f96'][i % 6]} />)}
+                    </Pie>
+                    <RechartsTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+      )}
+
+      <Card style={{ marginBottom: 16, background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Space size="small" wrap>
+            <Input
+              prefix={<SearchOutlined />}
+              placeholder="제목 또는 메타데이터 검색..."
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              style={{ width: 200 }}
+              allowClear
+            />
+            <Select
+              value={filterType}
+              onChange={setFilterType}
+              style={{ width: 110 }}
+              placeholder="타입"
+              options={[{ value: 'ALL', label: '모든 타입' }, ...Object.values(IssueType).map(t => ({ value: t, label: getIssueTypeLabel(t) }))]}
+            />
+            <Select
+              value={filterStatus}
+              onChange={setFilterStatus}
+              style={{ width: 110 }}
+              placeholder="상태"
+              options={[{ value: 'ALL', label: '모든 상태' }, ...Object.values(IssueStatus).map(s => ({ value: s, label: getIssueStatusLabel(s) }))]}
+            />
+            <Select
+              value={filterPriority}
+              onChange={setFilterPriority}
+              style={{ width: 110 }}
+              placeholder="우선순위"
+              options={[{ value: 'ALL', label: '모든 우선순위' }, ...Object.values(IssuePriority).map(p => ({ value: p, label: getIssuePriorityLabel(p) }))]}
+            />
+            <Select
+              value={filterProject}
+              onChange={setFilterProject}
+              style={{ width: 130 }}
+              placeholder="프로젝트"
+              options={[{ value: 'ALL', label: '전체 프로젝트' }, ...projects.map(p => ({ value: p.id, label: p.name }))]}
+            />
+            <Button
+              type={filterMyIssues ? 'primary' : 'default'}
+              onClick={() => setFilterMyIssues(!filterMyIssues)}
+            >
+              내 이슈
+            </Button>
           </Space>
-          <Segmented value={viewMode} onChange={(val) => setViewMode(val as ViewMode)} options={[{ value: 'LIST', icon: <BarsOutlined />, label: '리스트' }, { value: 'BOARD', icon: <AppstoreOutlined />, label: '보드' }]} />
+          <Space>
+            <Button
+              icon={<AreaChartOutlined />}
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              type={showAnalytics ? 'primary' : 'default'}
+            >
+              통계
+            </Button>
+            <Segmented
+              value={viewMode}
+              onChange={v => setViewMode(v as ViewMode)}
+              options={[{ value: 'LIST', icon: <BarsOutlined />, label: '목록' }, { value: 'BOARD', icon: <AppstoreOutlined />, label: '보드' }]}
+            />
+          </Space>
         </div>
       </Card>
 
+      {/* Main Content Area: Board or List View */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {viewMode === 'LIST' ? (
-          <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }} styles={{ body: { padding: 0 } }}>
-            <Table columns={columns} dataSource={filteredIssues} rowKey="id" pagination={{ pageSize: 15, showSizeChanger: true, showTotal: (total) => `총 ${total}개` }} />
-          </Card>
+          <div style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: 12 }}>
+            <Table
+              rowSelection={{ selectedRowKeys, onChange: k => setSelectedRowKeys(k) }}
+              columns={columns}
+              dataSource={filteredIssues}
+              rowKey="id"
+              pagination={{ pageSize: 10, showSizeChanger: true }}
+            />
+          </div>
         ) : renderBoardView()}
       </div>
 
-      <IssueModal open={isModalOpen} onCancel={() => setIsModalOpen(false)} onOk={handleSave} initialValues={editingIssue} title={editingIssue ? '이슈 수정' : '새 이슈 등록'} okText={editingIssue ? '수정' : '등록'} />
-      <IssueDetailModal open={isDetailOpen} issue={selectedIssue} onCancel={() => setIsDetailOpen(false)} onEdit={handleEdit} />
+      {/* Floating Bulk Action Bar */}
+      {selectedRowKeys.length > 0 && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 1000, background: isDark ? '#262626' : '#fff',
+          padding: '12px 24px', borderRadius: 50,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          border: `1px solid ${colors.primary}`,
+          display: 'flex', alignItems: 'center', gap: 20
+        }}>
+          <Text strong><Text style={{ color: colors.primary }}>{selectedRowKeys.length}</Text>개 선택됨</Text>
+          <Space>
+            <Select
+              placeholder="상태 변경"
+              style={{ width: 110 }}
+              size="small"
+              onChange={handleBulkStatusChange}
+              options={Object.values(IssueStatus).map(s => ({ value: s, label: getIssueStatusLabel(s) }))}
+            />
+            <Button size="small" danger type="text" onClick={handleBulkDelete}>일괄 삭제</Button>
+            <Button size="small" type="text" onClick={() => setSelectedRowKeys([])}>취소</Button>
+          </Space>
+        </div>
+      )}
+
+      {/* Modals */}
+      <IssueModal
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        onOk={handleSave}
+        initialValues={editingIssue}
+      />
+      <IssueDetailModal
+        open={isDetailOpen}
+        issue={selectedIssue}
+        onCancel={() => setIsDetailOpen(false)}
+        onEdit={handleEdit}
+      />
     </div>
   );
 };
