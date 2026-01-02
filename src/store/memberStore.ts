@@ -53,7 +53,16 @@ interface MemberStore {
 export const useMemberStore = create<MemberStore>()(
   persist(
     (set, get) => ({
-      members: [],
+      members: [
+        {
+          id: 'member-demo',
+          name: '데모 사용자',
+          email: 'demo@example.com',
+          role: 'DEVELOPER',
+          status: 'online',
+          joinDate: new Date(),
+        }
+      ],
 
       addMember: (memberData: CreateMemberDTO) => {
         const newMember: Member = {

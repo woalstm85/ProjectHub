@@ -8,16 +8,19 @@ import {
   DollarOutlined,
   CalendarOutlined,
   BellOutlined,
-  PlusOutlined,
-  UserAddOutlined,
-  ThunderboltOutlined,
+  MessageOutlined,
+  FileDoneOutlined,
+  BarChartOutlined,
   CheckSquareOutlined,
 } from '@ant-design/icons';
-import { useProjectStore, ProjectStatus } from '../store/projectStore';
+import { useAuthStore } from '../store/authStore';
+import { useProjectStore, ProjectStatus, IndustryType } from '../store/projectStore';
 import { useTaskStore, TaskStatus, TaskPriority } from '../store/taskStore';
 import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
 import { useActivityStore, ActivityType } from '../store/activityStore';
+import { useApprovalStore } from '../store/approvalStore';
+import { useMessageStore } from '../store/messageStore';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
 } from 'recharts';
@@ -33,11 +36,20 @@ const { Title, Text } = Typography;
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { projects, addProject } = useProjectStore();
-  const { tasks, addTask } = useTaskStore();
+  const { projects: allProjects, addProject } = useProjectStore();
+  const { tasks: allTasks, addTask } = useTaskStore();
   const { members } = useMemberStore();
+  const { user } = useAuthStore();
   const { effectiveTheme } = useSettings();
+  const { approvals } = useApprovalStore();
+  const { messages } = useMessageStore();
+
+  const projects = allProjects.filter(p => user?.role === 'admin' || (user?.memberId && p.teamMembers.includes(user.memberId)));
+  const tasks = allTasks.filter(t => user?.role === 'admin' || (user?.memberId && t.assignee === user.memberId) || projects.some(p => p.id === t.projectId));
   const { activities } = useActivityStore();
+
+  const pendingApprovals = approvals.filter(a => a.approverId === user?.id && a.status === 'PENDING');
+  const recentMessages = messages.filter(m => m.type !== 'SYSTEM').slice(0, 10);
   const { token } = theme.useToken();
 
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
@@ -143,6 +155,7 @@ const Dashboard: React.FC = () => {
       description: values.description,
       status: values.status,
       priority: values.priority,
+      industry: values.industry || IndustryType.GENERAL,
       teamSize: values.teamMembers?.length || 0,
       teamMembers: values.teamMembers || [],
       startDate: values.dateRange[0].toDate(),
@@ -240,40 +253,106 @@ const Dashboard: React.FC = () => {
         </Space>
       </div>
 
-      {/* Quick Actions & Weekly Summary */}
+      {/* Management & Status Row */}
       <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
-        <Col xs={24} lg={16}>
+        <Col xs={24} lg={8}>
           <Card
+            title={<Space><FileDoneOutlined style={{ color: token.colorPrimary }} /><span>내 결재 대기</span></Space>}
             bordered={false}
-            style={{
-              ...commonCardStyle,
-              background: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryActive} 100%)`,
-              border: 'none',
-              boxShadow: '0 4px 16px rgba(24, 144, 255, 0.2)',
-            }}
+            style={commonCardStyle}
+            extra={<Button type="link" size="small" onClick={() => navigate('/approvals')}>전체보기</Button>}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#fff' }}>
-              <div>
-                <Title level={4} style={{ color: '#fff', marginBottom: 8 }}>빠른 실행</Title>
-                <Text style={{ color: 'rgba(255,255,255,0.8)' }}>자주 사용하는 기능을 바로 실행하세요.</Text>
-                <div style={{ marginTop: 24, display: 'flex', gap: 12 }}>
-                  <Button size="large" icon={<PlusOutlined />} onClick={() => setIsProjectModalOpen(true)}>새 프로젝트</Button>
-                  <Button size="large" icon={<CheckSquareOutlined />} onClick={() => setIsTaskModalOpen(true)}>새 작업</Button>
-                  <Button size="large" icon={<UserAddOutlined />} onClick={() => navigate('/members')}>팀원 초대</Button>
-                </div>
-              </div>
-              <ThunderboltOutlined style={{ fontSize: 120, opacity: 0.2, color: '#fff' }} />
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 180 }}>
+              {pendingApprovals.length > 0 ? (
+                <List
+                  dataSource={pendingApprovals.slice(0, 3)}
+                  renderItem={(item) => (
+                    <List.Item style={{ padding: '12px 0' }}>
+                      <List.Item.Meta
+                        avatar={<Avatar icon={<FileDoneOutlined />} style={{ backgroundColor: '#e6f7ff', color: '#1890ff' }} />}
+                        title={<Text strong style={{ cursor: 'pointer' }} onClick={() => navigate('/approvals')}>{item.title}</Text>}
+                        description={
+                          <Space>
+                            <Tag color="cyan" style={{ fontSize: 10 }}>{item.requesterName}</Tag>
+                            <Text type="secondary" style={{ fontSize: 11 }}>{dayjs(item.createdAt).format('MM-DD')}</Text>
+                          </Space>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Empty description="승인할 서류가 없습니다." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
             </div>
           </Card>
         </Col>
         <Col xs={24} lg={8}>
-          <Card title="이번 주 요약" bordered={false} style={commonCardStyle}>
-            <div style={{ display: 'flex', justifyContent: 'space-around', textAlign: 'center', alignItems: 'center', height: '100%' }}>
-              <div>
-                <Statistic title="완료한 작업" value={tasksCompletedThisWeek} prefix={<CheckCircleOutlined style={{ color: '#52c41a' }} />} />
-              </div>
-              <div>
-                <Statistic title="시작한 프로젝트" value={projectsStartedThisWeek} prefix={<ProjectOutlined style={{ color: '#1890ff' }} />} />
+          <Card
+            title={<Space><MessageOutlined style={{ color: '#52c41a' }} /><span>최근 협업 소식</span></Space>}
+            bordered={false}
+            style={commonCardStyle}
+            extra={<Button type="link" size="small" onClick={() => navigate('/communication')}>전체보기</Button>}
+          >
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 180 }}>
+              {recentMessages.length > 0 ? (
+                <List
+                  dataSource={recentMessages.slice(0, 3)}
+                  renderItem={(msg) => (
+                    <List.Item style={{ padding: '12px 0' }}>
+                      <List.Item.Meta
+                        avatar={<Avatar icon={<MessageOutlined />} style={{ backgroundColor: '#f6ffed', color: '#52c41a' }} />}
+                        title={<Text ellipsis style={{ width: '100%' }}>{msg.content}</Text>}
+                        description={
+                          <Space>
+                            <Text strong style={{ fontSize: 11 }}>{msg.senderName}</Text>
+                            <Text type="secondary" style={{ fontSize: 10 }}>{dayjs(msg.createdAt).format('HH:mm')}</Text>
+                          </Space>
+                        }
+                      />
+                    </List.Item>
+                  )}
+                />
+              ) : (
+                <Empty description="새로운 메시지가 없습니다." image={Empty.PRESENTED_IMAGE_SIMPLE} />
+              )}
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card
+            title={<Space><BarChartOutlined style={{ color: '#722ed1' }} /><span>이번 주 리포트</span></Space>}
+            bordered={false}
+            style={commonCardStyle}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', minHeight: 180 }}>
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Statistic
+                    title="완료한 작업"
+                    value={tasksCompletedThisWeek}
+                    valueStyle={{ color: '#52c41a' }}
+                    prefix={<CheckCircleOutlined />}
+                  />
+                  <div style={{ marginTop: 8 }}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>목표 대비 85%</Text>
+                  </div>
+                </Col>
+                <Col span={12}>
+                  <Statistic
+                    title="신규 프로젝트"
+                    value={projectsStartedThisWeek}
+                    valueStyle={{ color: '#1890ff' }}
+                    prefix={<ProjectOutlined />}
+                  />
+                  <div style={{ marginTop: 8 }}>
+                    <Text type="secondary" style={{ fontSize: 12 }}>전달 대비 +2</Text>
+                  </div>
+                </Col>
+              </Row>
+              <div style={{ marginTop: 24, padding: '12px', background: isDark ? '#262626' : '#f9f9f9', borderRadius: 8 }}>
+                <Text strong style={{ fontSize: 13 }}>리더의 한마디:</Text><br />
+                <Text italic style={{ fontSize: 12 }}>"이번 주 목표 달성까지 조금만 더 힘내세요!"</Text>
               </div>
             </div>
           </Card>

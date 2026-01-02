@@ -2,6 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useActivityStore, ActivityType } from './activityStore';
 import { useAuthStore } from './authStore';
+import { useMessageStore } from './messageStore';
+import { useMemberStore } from './memberStore';
+
+// 산업군 타입
+export const IndustryType = {
+  SOFTWARE: 'SOFTWARE',
+  MANUFACTURING: 'MANUFACTURING',
+  SERVICE: 'SERVICE',
+  GENERAL: 'GENERAL',
+} as const;
+export type IndustryType = (typeof IndustryType)[keyof typeof IndustryType];
 
 // 프로젝트 상태
 export const ProjectStatus = {
@@ -46,6 +57,7 @@ export interface Project {
   budget: number;
   spentBudget: number;
   teamMembers: string[];
+  industry: IndustryType;
   createdAt: Date;
   updatedAt: Date;
   isFavorite?: boolean;
@@ -57,6 +69,7 @@ export interface CreateProjectDTO {
   description: string;
   status: ProjectStatus;
   priority: ProjectPriority;
+  industry: IndustryType;
   methodology?: Methodology;
   teamSize: number;
   teamMembers: string[];
@@ -82,7 +95,42 @@ interface ProjectStore {
 export const useProjectStore = create<ProjectStore>()(
   persist(
     (set, get) => ({
-      projects: [],
+      projects: [
+        {
+          id: 'project-1',
+          name: '차세대 ERP 구축',
+          description: '전사 자원 관리 시스템 고도화',
+          status: ProjectStatus.IN_PROGRESS,
+          priority: ProjectPriority.HIGH,
+          industry: IndustryType.SOFTWARE,
+          teamSize: 12,
+          startDate: new Date('2024-01-01'),
+          endDate: new Date('2024-12-31'),
+          progress: 35,
+          budget: 500000000,
+          spentBudget: 156000000,
+          teamMembers: ['member-1', 'member-2', 'member-demo'],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'project-2',
+          name: '스마트 팩토리 도입',
+          description: '생산 라인 자동화 및 실시간 모니터링 시스템 구축',
+          status: ProjectStatus.PLANNING,
+          priority: ProjectPriority.URGENT,
+          industry: IndustryType.MANUFACTURING,
+          teamSize: 8,
+          startDate: new Date('2024-03-01'),
+          endDate: new Date('2024-09-30'),
+          progress: 10,
+          budget: 300000000,
+          spentBudget: 25000000,
+          teamMembers: ['member-3', 'member-4', 'member-demo'],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ],
       selectedProject: null,
 
       addProject: (projectData: CreateProjectDTO) => {
@@ -110,6 +158,25 @@ export const useProjectStore = create<ProjectStore>()(
           projectId: newProject.id,
           projectName: newProject.name,
         });
+
+        // 팀원들에게 프로젝트 배정 알림 발송
+        if (newProject.teamMembers && newProject.teamMembers.length > 0) {
+          const messageStore = useMessageStore.getState();
+          const memberStore = useMemberStore.getState();
+
+          newProject.teamMembers.forEach(memberId => {
+            const member = memberStore.getMemberById(memberId);
+            if (member) {
+              messageStore.sendMessage({
+                senderId: user?.id || 'admin',
+                senderName: user?.name || '관리자',
+                receiverId: member.id,
+                receiverName: member.name,
+                content: `[새 프로젝트] '${newProject.name}' 프로젝트에 배정되었습니다.`,
+              });
+            }
+          });
+        }
       },
 
       updateProject: (id: string, updatedData: Partial<Project>) => {
@@ -146,6 +213,28 @@ export const useProjectStore = create<ProjectStore>()(
             projectId: project.id,
             projectName: updatedData.name || project.name,
           });
+        }
+
+        // 새로 추가된 팀원들에게 알림 발송
+        if (updatedData.teamMembers) {
+          const newMembers = updatedData.teamMembers.filter(mId => !project.teamMembers.includes(mId));
+          if (newMembers.length > 0) {
+            const messageStore = useMessageStore.getState();
+            const memberStore = useMemberStore.getState();
+
+            newMembers.forEach(memberId => {
+              const member = memberStore.getMemberById(memberId);
+              if (member) {
+                messageStore.sendMessage({
+                  senderId: user?.id || 'admin',
+                  senderName: user?.name || '관리자',
+                  receiverId: member.id,
+                  receiverName: member.name,
+                  content: `[프로젝트 초대] '${updatedData.name || project.name}' 프로젝트에 초대되었습니다.`,
+                });
+              }
+            });
+          }
         }
       },
 

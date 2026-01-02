@@ -1,14 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// 산업군 타입
-export const IndustryType = {
-  SOFTWARE: 'SOFTWARE',
-  MANUFACTURING: 'MANUFACTURING',
-  SERVICE: 'SERVICE',
-  GENERAL: 'GENERAL',
-} as const;
-export type IndustryType = (typeof IndustryType)[keyof typeof IndustryType];
+import { IndustryType } from './projectStore';
+export { IndustryType };
 
 // 이슈 타입
 export const IssueType = {
@@ -81,6 +75,8 @@ export interface IssueLabel {
   name: string;
   color: string;
   description?: string;
+  industry?: IndustryType;
+  category?: string;
 }
 
 // 이슈
@@ -118,8 +114,6 @@ export interface Issue {
 export type CreateIssueDTO = Omit<Issue, 'id' | 'createdAt' | 'updatedAt'>;
 
 interface IssueStore {
-  industry: IndustryType;
-  setIndustry: (industry: IndustryType) => void;
   issues: Issue[];
   comments: IssueComment[];
   attachments: IssueAttachment[];
@@ -139,25 +133,54 @@ interface IssueStore {
   addLabel: (label: Omit<IssueLabel, 'id'>) => void;
   updateLabel: (id: string, updates: Partial<IssueLabel>) => void;
   deleteLabel: (id: string) => void;
+  initializeLabels: () => void;
+  resetLabelsToDefault: () => void;
   getIssuesByProject: (projectId: string) => Issue[];
   getIssuesByAssignee: (assigneeId: string) => Issue[];
   getIssueComments: (issueId: string) => IssueComment[];
   getIssueAttachments: (issueId: string) => IssueAttachment[];
 }
 
-// 제조업 맞춤 라벨
+// 산업군별 맞춤 라벨
 const defaultLabels: IssueLabel[] = [
-  { id: 'label-1', name: '생산라인', color: '#722ed1', description: '생산라인 관련' },
-  { id: 'label-2', name: '품질관리', color: '#f5222d', description: '품질관리 관련' },
-  { id: 'label-3', name: '설비', color: '#fa8c16', description: '설비/장비 관련' },
-  { id: 'label-4', name: '자재', color: '#13c2c2', description: '자재/원자재 관련' },
-  { id: 'label-5', name: '안전', color: '#ff4d4f', description: '안전사고 관련' },
-  { id: 'label-6', name: '납기', color: '#1890ff', description: '납기/일정 관련' },
-  { id: 'label-7', name: '공정개선', color: '#52c41a', description: '공정개선 관련' },
-  { id: 'label-8', name: '고객클레임', color: '#eb2f96', description: '고객 클레임 관련' },
-  { id: 'label-9', name: '물류', color: '#faad14', description: '물류/출하 관련' },
-  { id: 'label-10', name: '금형', color: '#8c8c8c', description: '금형/치공구 관련' },
+  // IT/Software
+  { id: 'it-1', name: 'Microservice', color: '#1890ff', description: 'MSA 관련 이슈', industry: IndustryType.SOFTWARE, category: '아키텍처' },
+  { id: 'it-2', name: 'Design System', color: '#eb2f96', description: '디자인 시스템 일관성', industry: IndustryType.SOFTWARE, category: '기술/디자인' },
+  { id: 'it-3', name: 'State Management', color: '#722ed1', description: '상태 관리(Zustand, Redux) 이슈', industry: IndustryType.SOFTWARE, category: '개발인프라' },
+  { id: 'it-4', name: 'CI/CD Pipeline', color: '#fa8c16', description: '배포 파이프라인 장애', industry: IndustryType.SOFTWARE, category: 'DevOps' },
+  { id: 'it-5', name: 'Vulnerability', color: '#f5222d', description: '보안 취약점 감지', industry: IndustryType.SOFTWARE, category: '보안/규제' },
+  { id: 'it-6', name: 'Memory Leak', color: '#fa541c', description: '메모리 누수 감지', industry: IndustryType.SOFTWARE, category: '품질/안정성' },
+  { id: 'it-7', name: 'API Versioning', color: '#13c2c2', description: 'API 버전 호환성 이슈', industry: IndustryType.SOFTWARE, category: '개발인프라' },
+  { id: 'it-8', name: 'Unit Test', color: '#52c41a', description: '테스트 코드 누락/오류', industry: IndustryType.SOFTWARE, category: '품질/안정성' },
+  { id: 'it-9', name: 'Localization', color: '#2f54eb', description: '다국어 지원 이슈', industry: IndustryType.SOFTWARE, category: '기술/디자인' },
+
+  // Manufacturing
+  { id: 'mfg-1', name: 'PLC/HMI 오류', color: '#722ed1', description: '제어 시스템 연동 오류', industry: IndustryType.MANUFACTURING, category: '설비관리' },
+  { id: 'mfg-2', name: 'Cycle Time 지연', color: '#fa8c16', description: '공정 택타임 미달', industry: IndustryType.MANUFACTURING, category: '현장공정' },
+  { id: 'mfg-3', name: 'Lot 추적 불일치', color: '#13c2c2', description: 'Lot 추적 데이터 오류', industry: IndustryType.MANUFACTURING, category: '공급망' },
+  { id: 'mfg-4', name: 'IQC/OQC 부적합', color: '#f5222d', description: '수입/출하 검사 부적합', industry: IndustryType.MANUFACTURING, category: '품질관리' },
+  { id: 'mfg-5', name: 'BOM 불일치', color: '#eb2f96', description: '자재명세서 설정 오류', industry: IndustryType.MANUFACTURING, category: '공급망' },
+  { id: 'mfg-6', name: '정기보전(PM)', color: '#52c41a', description: '설비 예방 보전 이슈', industry: IndustryType.MANUFACTURING, category: '설비관리' },
+  { id: 'mfg-7', name: 'LOTO 안전지침', color: '#cf1322', description: '안전 잠금장치 준수 이슈', industry: IndustryType.MANUFACTURING, category: '안전보건' },
+  { id: 'mfg-8', name: '금형 마모', color: '#a0d911', description: '금형 교체 주기 도래', industry: IndustryType.MANUFACTURING, category: '설비관리' },
+  { id: 'mfg-9', name: '치수 부적합', color: '#fa541c', description: '정밀 측정치 허용범위 초과', industry: IndustryType.MANUFACTURING, category: '품질관리' },
+
+  // Service/Business
+  { id: 'svc-1', name: 'VIP 케어', color: '#eb2f96', description: 'VIP 고객 긴급 요청', industry: IndustryType.SERVICE, category: '고객지원' },
+  { id: 'svc-2', name: 'SLA 미준수', color: '#f5222d', description: '서비스 수준 계약 지연', industry: IndustryType.SERVICE, category: '운영관리' },
+  { id: 'svc-3', name: 'VOC 분석', color: '#1890ff', description: '고객의 소리 트렌드 분석', industry: IndustryType.SERVICE, category: '고객지원' },
+  { id: 'svc-4', name: '프로모션 정산', color: '#722ed1', description: '이벤트 매출 정산 오류', industry: IndustryType.SERVICE, category: '비즈니스' },
+  { id: 'svc-5', name: '물류 거점 지연', color: '#faad14', description: '허브/터미널 배송 지연', industry: IndustryType.SERVICE, category: '공급망/물류' },
+  { id: 'svc-6', name: '채널 파트너십', color: '#13c2c2', description: '제휴 채널 연동 이슈', industry: IndustryType.SERVICE, category: '비즈니스' },
+  { id: 'svc-7', name: 'CS 메뉴얼 가이드', color: '#52c41a', description: '상담 스크립트 보완 요구', industry: IndustryType.SERVICE, category: '고객지원' },
+
+  // General
+  { id: 'gen-1', name: '컴플라이언스', color: '#9c27b0', description: '법적 규제 대응', industry: IndustryType.GENERAL, category: '경영관리' },
+  { id: 'gen-2', name: '예산 전용/추가', color: '#4caf50', description: '예산 조정 필요', industry: IndustryType.GENERAL, category: '경영지원' },
+  { id: 'gen-3', name: '정보보안(ISMS)', color: '#f44336', description: '보안 인증 대응', industry: IndustryType.GENERAL, category: '사내보안' },
+  { id: 'gen-4', name: '프로세스 표준화', color: '#607d8b', description: '업무 절차 문서화', industry: IndustryType.GENERAL, category: '공통업무' },
 ];
+
 
 // 초기 데이터 없음
 const sampleIssues: Issue[] = [];
@@ -166,8 +189,6 @@ const sampleComments: IssueComment[] = [];
 export const useIssueStore = create<IssueStore>()(
   persist(
     (set, get) => ({
-      industry: IndustryType.SOFTWARE,
-      setIndustry: (industry) => set({ industry }),
       issues: sampleIssues,
       comments: sampleComments,
       attachments: [],
@@ -276,12 +297,12 @@ export const useIssueStore = create<IssueStore>()(
         set((state) => ({ attachments: state.attachments.filter((a) => a.id !== id) }));
       },
 
-      addLabel: (labelData) => {
+      addLabel: (labelData: Omit<IssueLabel, 'id'>) => {
         const newLabel: IssueLabel = { ...labelData, id: `label-${Date.now()}` };
         set((state) => ({ labels: [...state.labels, newLabel] }));
       },
 
-      updateLabel: (id, updates) => {
+      updateLabel: (id: string, updates: Partial<IssueLabel>) => {
         set((state) => ({
           labels: state.labels.map((l) => (l.id === id ? { ...l, ...updates } : l)),
         }));
@@ -297,6 +318,29 @@ export const useIssueStore = create<IssueStore>()(
         }));
       },
 
+      resetLabelsToDefault: () => {
+        set({ labels: defaultLabels });
+      },
+
+      initializeLabels: () => {
+        const { labels } = get();
+        // 이미 셋팅된 라벨이 충분히 있다면(예: 10개 이상) 건너뜀
+        // 또는 특정 필수 라벨이 있는지 확인하여 없으면 defaultLabels를 합침
+        const hasIndustryLabels = labels.some(l => l.industry !== undefined);
+
+        if (!hasIndustryLabels || labels.length < 5) {
+          set({ labels: defaultLabels });
+        } else {
+          // 기존 라벨에 없는 기본 라벨만 선별해서 추가 (중복 방지)
+          const existingNames = new Set(labels.map(l => l.name));
+          const missingDefaults = defaultLabels.filter(dl => !existingNames.has(dl.name));
+
+          if (missingDefaults.length > 0) {
+            set({ labels: [...labels, ...missingDefaults] });
+          }
+        }
+      },
+
       getIssuesByProject: (projectId) => get().issues.filter((i) => i.projectId === projectId),
       getIssuesByAssignee: (assigneeId) => get().issues.filter((i) => i.assigneeId === assigneeId),
       getIssueComments: (issueId) =>
@@ -310,7 +354,19 @@ export const useIssueStore = create<IssueStore>()(
 );
 
 // 유틸리티 함수들
-export const getIssueTypeLabel = (type: IssueType): string => {
+export const getIssueTypeLabel = (type: IssueType, industry?: IndustryType): string => {
+  if (industry === IndustryType.MANUFACTURING) {
+    if (type === IssueType.TASK) return '생산 과업';
+    if (type === IssueType.IMPROVEMENT) return '공정 개선';
+    if (type === IssueType.QUESTION) return '현장 문의';
+  }
+
+  if (industry === IndustryType.SERVICE) {
+    if (type === IssueType.BUG) return '상담 오류';
+    if (type === IssueType.IMPROVEMENT) return '품질 고도화';
+    if (type === IssueType.QUESTION) return '고객 문의';
+  }
+
   const labels: Record<IssueType, string> = {
     [IssueType.BUG]: '버그',
     [IssueType.FEATURE]: '기능 요청',
@@ -340,7 +396,29 @@ export const getIssueTypeColor = (type: IssueType): string => {
   return colors[type];
 };
 
-export const getIssueStatusLabel = (status: IssueStatus): string => {
+export const getIssueStatusLabel = (status: IssueStatus, industry?: IndustryType): string => {
+  if (industry === IndustryType.MANUFACTURING) {
+    const mfgLabels: Record<IssueStatus, string> = {
+      [IssueStatus.OPEN]: '발생',
+      [IssueStatus.IN_PROGRESS]: '조치중',
+      [IssueStatus.RESOLVED]: '조치완료',
+      [IssueStatus.CLOSED]: '검증완료',
+      [IssueStatus.REOPENED]: '재발생',
+    };
+    return mfgLabels[status];
+  }
+
+  if (industry === IndustryType.SERVICE) {
+    const svcLabels: Record<IssueStatus, string> = {
+      [IssueStatus.OPEN]: '접수',
+      [IssueStatus.IN_PROGRESS]: '처리중',
+      [IssueStatus.RESOLVED]: '답변완료',
+      [IssueStatus.CLOSED]: '처리종료',
+      [IssueStatus.REOPENED]: '재접수',
+    };
+    return svcLabels[status];
+  }
+
   const labels: Record<IssueStatus, string> = {
     [IssueStatus.OPEN]: '열림',
     [IssueStatus.IN_PROGRESS]: '진행중',
@@ -362,7 +440,27 @@ export const getIssueStatusColor = (status: IssueStatus): string => {
   return colors[status];
 };
 
-export const getIssuePriorityLabel = (priority: IssuePriority): string => {
+export const getIssuePriorityLabel = (priority: IssuePriority, industry?: IndustryType): string => {
+  if (industry === IndustryType.MANUFACTURING) {
+    const mfgLabels: Record<IssuePriority, string> = {
+      [IssuePriority.CRITICAL]: '즉시조치',
+      [IssuePriority.HIGH]: '우선조치',
+      [IssuePriority.MEDIUM]: '보통',
+      [IssuePriority.LOW]: '장기과제',
+    };
+    return mfgLabels[priority];
+  }
+
+  if (industry === IndustryType.SERVICE) {
+    const svcLabels: Record<IssuePriority, string> = {
+      [IssuePriority.CRITICAL]: '긴급대응',
+      [IssuePriority.HIGH]: '중점관리',
+      [IssuePriority.MEDIUM]: '일반',
+      [IssuePriority.LOW]: '참고',
+    };
+    return svcLabels[priority];
+  }
+
   const labels: Record<IssuePriority, string> = {
     [IssuePriority.CRITICAL]: '긴급',
     [IssuePriority.HIGH]: '높음',
@@ -382,7 +480,27 @@ export const getIssuePriorityColor = (priority: IssuePriority): string => {
   return colors[priority];
 };
 
-export const getIssueSeverityLabel = (severity: IssueSeverity): string => {
+export const getIssueSeverityLabel = (severity: IssueSeverity, industry?: IndustryType): string => {
+  if (industry === IndustryType.MANUFACTURING) {
+    const mfgLabels: Record<IssueSeverity, string> = {
+      [IssueSeverity.BLOCKER]: '심각 (라인 중단)',
+      [IssueSeverity.MAJOR]: '중요 (품질 결함)',
+      [IssueSeverity.MINOR]: '보통 (성능 저하)',
+      [IssueSeverity.TRIVIAL]: '경미 (사소)',
+    };
+    return mfgLabels[severity];
+  }
+
+  if (industry === IndustryType.SERVICE) {
+    const svcLabels: Record<IssueSeverity, string> = {
+      [IssueSeverity.BLOCKER]: '매우 높음 (서비스 불능)',
+      [IssueSeverity.MAJOR]: '높음 (주요 기능 장애)',
+      [IssueSeverity.MINOR]: '보통 (일부 기능 제한)',
+      [IssueSeverity.TRIVIAL]: '낮음 (단순 문의)',
+    };
+    return svcLabels[severity];
+  }
+
   const labels: Record<IssueSeverity, string> = {
     [IssueSeverity.BLOCKER]: '블로커',
     [IssueSeverity.MAJOR]: '주요',

@@ -12,13 +12,12 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/ko';
 import {
-  IndustryType,
   type Issue, IssueType, IssueStatus,
   getIssueTypeLabel, getIssueTypeColor, getIssueStatusLabel, getIssueStatusColor,
   getIssuePriorityLabel, getIssuePriorityColor, getIssueSeverityLabel, getIssueSeverityColor,
   useIssueStore,
 } from '../store/issueStore';
-import { useProjectStore } from '../store/projectStore';
+import { useProjectStore, IndustryType } from '../store/projectStore';
 import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
 
@@ -39,7 +38,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
   const { effectiveTheme } = useSettings();
   const { projects } = useProjectStore();
   const { members } = useMemberStore();
-  const { labels, changeStatus, assignIssue, addComment, deleteComment, getIssueComments, industry } = useIssueStore();
+  const { labels, changeStatus, assignIssue, addComment, deleteComment, getIssueComments } = useIssueStore();
   const [newComment, setNewComment] = useState('');
 
   const isDark = effectiveTheme === 'dark';
@@ -71,11 +70,11 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
     },
   };
 
-  const config = industryConfigs[industry] || industryConfigs[IndustryType.SOFTWARE];
-
   if (!issue) return null;
 
   const project = projects.find((p) => p.id === issue.projectId);
+  const currentIndustry = project?.industry || IndustryType.SOFTWARE;
+  const config = industryConfigs[currentIndustry] || industryConfigs[IndustryType.SOFTWARE];
   const issueComments = getIssueComments(issue.id);
   const issueLabels = labels.filter((l) => issue.labels.includes(l.id));
 
@@ -136,7 +135,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
             <Space align="center" style={{ marginBottom: 12 }}>
               {getTypeIcon(issue.type)}
               <Tag color={getIssueTypeColor(issue.type)} style={{ borderRadius: 4, fontWeight: 600 }}>
-                {getIssueTypeLabel(issue.type)}
+                {getIssueTypeLabel(issue.type, currentIndustry)}
               </Tag>
               <Text type="secondary" style={{ fontSize: 13, background: isDark ? '#262626' : '#f5f5f5', padding: '2px 8px', borderRadius: 4 }}>
                 #{issue.id.includes('-') ? issue.id.split('-').pop() : issue.id.slice(-6)}
@@ -160,7 +159,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
               <div style={{ background: isDark ? 'rgba(245,34,45,0.05)' : 'rgba(245,34,45,0.02)', padding: 24, borderRadius: 12, border: `1px dashed ${isDark ? '#434343' : '#ffccc7'}` }}>
                 <Row gutter={[16, 16]}>
                   {issue.environment && (
-                    <Col span={industry === IndustryType.MANUFACTURING ? 12 : 24}>
+                    <Col span={currentIndustry === IndustryType.MANUFACTURING ? 12 : 24}>
                       <Text strong style={{ display: 'block', marginBottom: 6, color: colors.text, fontSize: 14 }}>
                         <EnvironmentOutlined style={{ marginRight: 8, color: '#f5222d' }} />{config.environmentLabel}
                       </Text>
@@ -245,7 +244,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
               <TextArea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                placeholder="댓글을 입력하세요 (Markdown 지원 예정)..."
+                placeholder="댓글을 입력하세요..."
                 autoSize={{ minRows: 2, maxRows: 6 }}
                 style={{ flex: 1, border: 'none', background: 'transparent', boxShadow: 'none', padding: 0, marginBottom: 12 }}
               />
@@ -264,7 +263,7 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
               <Select value={issue.status} onChange={handleStatusChange} style={{ width: '100%' }}>
                 {Object.values(IssueStatus).map((status) => (
                   <Select.Option key={status} value={status}>
-                    <Badge color={getIssueStatusColor(status)} text={getIssueStatusLabel(status)} />
+                    <Badge color={getIssueStatusColor(status)} text={getIssueStatusLabel(status, currentIndustry)} />
                   </Select.Option>
                 ))}
               </Select>
@@ -275,12 +274,12 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                 <div>
                   <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>우선순위</Text>
-                  <Tag color={getIssuePriorityColor(issue.priority)} bordered={false} style={{ margin: 0, width: '100%', textAlign: 'center', borderRadius: 4 }}>{getIssuePriorityLabel(issue.priority)}</Tag>
+                  <Tag color={getIssuePriorityColor(issue.priority)} bordered={false} style={{ margin: 0, width: '100%', textAlign: 'center', borderRadius: 4 }}>{getIssuePriorityLabel(issue.priority, currentIndustry)}</Tag>
                 </div>
                 {issue.type === IssueType.BUG && issue.severity && (
                   <div>
                     <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 4 }}>심각도</Text>
-                    <Tag color={getIssueSeverityColor(issue.severity)} bordered={false} style={{ margin: 0, width: '100%', textAlign: 'center', borderRadius: 4 }}>{getIssueSeverityLabel(issue.severity)}</Tag>
+                    <Tag color={getIssueSeverityColor(issue.severity)} bordered={false} style={{ margin: 0, width: '100%', textAlign: 'center', borderRadius: 4 }}>{getIssueSeverityLabel(issue.severity, currentIndustry)}</Tag>
                   </div>
                 )}
               </div>
@@ -324,7 +323,9 @@ const IssueDetailModal: React.FC<IssueDetailModalProps> = ({ open, issue, onCanc
                     <Text type="secondary" style={{ fontSize: 11, display: 'block', marginBottom: 8 }}><TagOutlined style={{ marginRight: 4 }} />라벨</Text>
                     <Space wrap size={[4, 4]}>
                       {issueLabels.map((label) => (
-                        <Tag key={label.id} style={{ background: `${label.color}10`, color: label.color, border: `1px solid ${label.color}30`, borderRadius: 10, fontSize: 11, margin: 0 }}>{label.name}</Tag>
+                        <Tag key={label.id} style={{ background: `${label.color}10`, color: label.color, border: `1px solid ${label.color}30`, borderRadius: 10, fontSize: 11, margin: 0 }}>
+                          {label.category ? `[${label.category}] ` : ''}{label.name}
+                        </Tag>
                       ))}
                     </Space>
                   </div>

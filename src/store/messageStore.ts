@@ -1,22 +1,33 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type MessageType = 'DIRECT' | 'CHANNEL' | 'SYSTEM';
+
 export interface Message {
     id: string;
+    type: MessageType;
     senderId: string;
     senderName: string;
-    receiverId: string;
-    receiverName: string;
+    receiverId?: string; // For DIRECT
+    receiverName?: string; // For DIRECT
+    projectId?: string; // For CHANNEL
     content: string;
-    isRead: boolean;
+    isRead?: boolean; // For DIRECT
     createdAt: Date;
+    metadata?: {
+        issueId?: string;
+        taskId?: string;
+        isUrgent?: boolean;
+        templateId?: string;
+    };
 }
 
 interface MessageStore {
     messages: Message[];
-    sendMessage: (message: Omit<Message, 'id' | 'createdAt' | 'isRead'>) => void;
+    sendMessage: (message: Omit<Message, 'id' | 'createdAt'>) => void;
     markAsRead: (id: string) => void;
     deleteMessage: (id: string) => void;
+    clearChannelMessages: (projectId: string) => void;
 }
 
 export const useMessageStore = create<MessageStore>()(
@@ -28,8 +39,7 @@ export const useMessageStore = create<MessageStore>()(
                     messages: [
                         {
                             ...message,
-                            id: Math.random().toString(36).substr(2, 9),
-                            isRead: false,
+                            id: `msg-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
                             createdAt: new Date(),
                         },
                         ...state.messages,
@@ -42,6 +52,10 @@ export const useMessageStore = create<MessageStore>()(
             deleteMessage: (id) =>
                 set((state) => ({
                     messages: state.messages.filter((m) => m.id !== id),
+                })),
+            clearChannelMessages: (projectId) =>
+                set((state) => ({
+                    messages: state.messages.filter((m) => m.projectId !== projectId),
                 })),
         }),
         {

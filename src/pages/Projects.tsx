@@ -34,14 +34,30 @@ import {
   useProjectStore,
   ProjectStatus,
   ProjectPriority,
+  IndustryType,
   type Project,
   type CreateProjectDTO
 } from '../store/projectStore';
 import { useMemberStore } from '../store/memberStore';
+import { useAuthStore } from '../store/authStore';
 import ProjectModal from '../components/ProjectModal';
 import { useSettings } from '../store/settingsStore';
 
 const { Title } = Typography;
+
+const industryLabels: Record<IndustryType, string> = {
+  SOFTWARE: 'IT/SW',
+  MANUFACTURING: '제조/공정',
+  SERVICE: '서비스',
+  GENERAL: '일반',
+};
+
+const industryColors: Record<IndustryType, string> = {
+  SOFTWARE: 'cyan',
+  MANUFACTURING: 'purple',
+  SERVICE: 'orange',
+  GENERAL: 'blue',
+};
 
 const Projects: React.FC = () => {
   const navigate = useNavigate();
@@ -89,18 +105,27 @@ const Projects: React.FC = () => {
     [ProjectPriority.URGENT]: '긴급',
   };
 
+  const { user } = useAuthStore();
+
   // 필터링된 프로젝트 목록
   const filteredProjects = useMemo(() => {
     return projects.filter(project => {
-      // 검색어 필터
+      // 1. 참여 인원 필터링 (권한 확인)
+      // admin이 아니고, 현재 사용자의 memberId가 프로젝트 팀원에 포함되어 있지 않으면 숨김
+      const isMember = user?.memberId && project.teamMembers.includes(user.memberId);
+      const isAdmin = user?.role === 'admin';
+
+      if (!isAdmin && !isMember) return false;
+
+      // 2. 검색어 필터
       const matchesSearch = searchText === '' ||
         project.name.toLowerCase().includes(searchText.toLowerCase()) ||
         project.description.toLowerCase().includes(searchText.toLowerCase());
 
-      // 상태 필터
+      // 3. 상태 필터
       const matchesStatus = filterStatus === 'ALL' || project.status === filterStatus;
 
-      // 우선순위 필터
+      // 4. 우선순위 필터
       const matchesPriority = filterPriority === 'ALL' || project.priority === filterPriority;
 
       return matchesSearch && matchesStatus && matchesPriority;
@@ -110,7 +135,7 @@ const Projects: React.FC = () => {
       if (!a.isFavorite && b.isFavorite) return 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
-  }, [projects, searchText, filterStatus, filterPriority]);
+  }, [projects, searchText, filterStatus, filterPriority, user]);
 
   const handleStatusChange = (projectId: string, newStatus: ProjectStatus) => {
     updateProject(projectId, { status: newStatus });
@@ -174,6 +199,15 @@ const Projects: React.FC = () => {
             </Select.Option>
           ))}
         </Select>
+      ),
+    },
+    {
+      title: '산업군',
+      dataIndex: 'industry',
+      key: 'industry',
+      width: 110,
+      render: (industry: IndustryType) => (
+        <Tag color={industryColors[industry]}>{industryLabels[industry]}</Tag>
       ),
     },
     {
@@ -291,6 +325,7 @@ const Projects: React.FC = () => {
       description: values.description,
       status: values.status,
       priority: values.priority,
+      industry: values.industry,
       teamSize: values.teamMembers?.length || 0,
       teamMembers: values.teamMembers || [],
       startDate: values.dateRange[0].toDate(),
@@ -357,6 +392,9 @@ const Projects: React.FC = () => {
                       {project.isFavorite && <StarFilled style={{ color: '#faad14', fontSize: 14 }} />}
                     </div>
                     <Space size={4}>
+                      <Tag color={industryColors[project.industry]} style={{ margin: 0, fontSize: 10 }}>
+                        {industryLabels[project.industry]}
+                      </Tag>
                       <Tag color={statusColors[project.status]} style={{ margin: 0, fontSize: 10 }}>
                         {statusLabels[project.status]}
                       </Tag>

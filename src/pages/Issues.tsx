@@ -10,10 +10,10 @@ import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/ko';
 import {
-  useIssueStore, IndustryType, IssueType, IssueStatus, IssuePriority, type Issue,
+  useIssueStore, IssueType, IssueStatus, IssuePriority, type Issue,
   getIssueTypeLabel, getIssueTypeColor, getIssueStatusLabel, getIssueStatusColor, getIssuePriorityLabel, getIssuePriorityColor,
 } from '../store/issueStore';
-import { useProjectStore } from '../store/projectStore';
+import { useProjectStore, IndustryType } from '../store/projectStore';
 import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
 import IssueModal from '../components/IssueModal';
@@ -32,7 +32,7 @@ const { Title, Text } = Typography;
 type ViewMode = 'LIST' | 'BOARD';
 
 const Issues: React.FC = () => {
-  const { industry, setIndustry, issues, labels, addIssue, updateIssue, deleteIssue } = useIssueStore();
+  const { issues, labels, addIssue, updateIssue, deleteIssue } = useIssueStore();
   const { projects } = useProjectStore();
   const { members } = useMemberStore();
   const { effectiveTheme } = useSettings();
@@ -69,12 +69,47 @@ const Issues: React.FC = () => {
     });
   }, [issues]);
 
+  const industryConfig: Record<IndustryType, any> = {
+    [IndustryType.SOFTWARE]: {
+      title: '소프트웨어 이슈 트래커',
+      subtitle: '팀의 기술적 이슈와 피드백을 한 곳에서 관리하세요',
+      bugLabel: '버그',
+      bugIcon: <BugOutlined />,
+    },
+    [IndustryType.MANUFACTURING]: {
+      title: '제조 공정 이슈 트래커',
+      subtitle: '생산 라인, 품질 결함 및 설비 이슈를 통합 관리하세요',
+      bugLabel: '결함/장애',
+      bugIcon: <ExclamationCircleOutlined />,
+    },
+    [IndustryType.SERVICE]: {
+      title: '서비스 서비스 데스크',
+      subtitle: '고객 요청 및 서비스 품질 이슈를 관리하세요',
+      bugLabel: '불만/오류',
+      bugIcon: <QuestionCircleOutlined />,
+    },
+    [IndustryType.GENERAL]: {
+      title: '범용 이슈 트래커',
+      subtitle: '다양한 분야의 현안과 이슈를 체계적으로 관리하세요',
+      bugLabel: '일반 이슈',
+      bugIcon: <BarsOutlined />,
+    },
+  };
+
+  const currentIndustry = useMemo(() => {
+    if (filterProject === 'ALL') return IndustryType.GENERAL;
+    const project = projects.find(p => p.id === filterProject);
+    return project?.industry || IndustryType.GENERAL;
+  }, [filterProject, projects]);
+
+  const config = industryConfig[currentIndustry];
+
   const typeDistribution = useMemo(() => {
     return Object.values(IssueType).map(type => ({
-      name: getIssueTypeLabel(type),
+      name: getIssueTypeLabel(type, currentIndustry),
       value: issues.filter(i => i.type === type).length,
     }));
-  }, [issues]);
+  }, [issues, currentIndustry]);
 
   const colors = {
     cardBg: isDark ? '#1f1f1f' : '#ffffff',
@@ -125,36 +160,14 @@ const Issues: React.FC = () => {
     }
   };
 
-  const industryConfig = {
-    [IndustryType.SOFTWARE]: {
-      title: '소프트웨어 이슈 트래커',
-      subtitle: '팀의 기술적 이슈와 피드백을 한 곳에서 관리하세요',
-      bugLabel: '버그',
-      bugIcon: <BugOutlined />,
-    },
-    [IndustryType.MANUFACTURING]: {
-      title: '제조 공정 이슈 트래커',
-      subtitle: '생산 라인, 품질 결함 및 설비 이슈를 통합 관리하세요',
-      bugLabel: '결함/장애',
-      bugIcon: <ExclamationCircleOutlined />,
-    },
-    [IndustryType.SERVICE]: {
-      title: '서비스 서비스 데스크',
-      subtitle: '고객 요청 및 서비스 품질 이슈를 관리하세요',
-      bugLabel: '불만/오류',
-      bugIcon: <QuestionCircleOutlined />,
-    },
-    [IndustryType.GENERAL]: {
-      title: '범용 이슈 트래커',
-      subtitle: '다양한 분야의 현안과 이슈를 체계적으로 관리하세요',
-      bugLabel: '일반 이슈',
-      bugIcon: <BarsOutlined />,
-    },
+
+  const handleAdd = () => {
+    setEditingIssue(null);
+    if (filterProject !== 'ALL') {
+      setEditingIssue({ projectId: filterProject } as any);
+    }
+    setIsModalOpen(true);
   };
-
-  const config = industryConfig[industry];
-
-  const handleAdd = () => { setEditingIssue(null); setIsModalOpen(true); };
 
   const handleSave = (values: any) => {
     const assignee = members.find((m) => m.id === values.assigneeId);
@@ -200,7 +213,15 @@ const Issues: React.FC = () => {
   const columns = [
     {
       title: '타입', dataIndex: 'type', key: 'type', width: 100,
-      render: (type: IssueType) => <Space>{getTypeIcon(type)}<span style={{ fontSize: 12 }}>{getIssueTypeLabel(type)}</span></Space>,
+      render: (type: IssueType, record: Issue) => {
+        const project = projects.find(p => p.id === record.projectId);
+        return (
+          <Space>
+            {getTypeIcon(type)}
+            <span style={{ fontSize: 12 }}>{getIssueTypeLabel(type, project?.industry)}</span>
+          </Space>
+        );
+      },
     },
     {
       title: '제목', dataIndex: 'title', key: 'title',
@@ -214,7 +235,9 @@ const Issues: React.FC = () => {
             )}
             <div style={{ marginTop: 4 }}>
               {issueLabels.map((label) => (
-                <Tag key={label.id} style={{ fontSize: 10, padding: '0 6px', background: `${label.color}10`, color: label.color, borderRadius: 10, border: `1px solid ${label.color}30` }}>{label.name}</Tag>
+                <Tag key={label.id} style={{ fontSize: 10, padding: '0 6px', background: `${label.color}10`, color: label.color, borderRadius: 10, border: `1px solid ${label.color}30` }}>
+                  {label.category ? `[${label.category}] ` : ''}{label.name}
+                </Tag>
               ))}
             </div>
           </div>
@@ -223,17 +246,21 @@ const Issues: React.FC = () => {
     },
     {
       title: '상태', dataIndex: 'status', key: 'status', width: 100,
-      render: (status: IssueStatus) => (
-        <Badge color={getIssueStatusColor(status)} text={<span style={{ color: colors.textSecondary }}>{getIssueStatusLabel(status)}</span>} />
-      ),
+      render: (status: IssueStatus, record: Issue) => {
+        const project = projects.find(p => p.id === record.projectId);
+        return <Badge color={getIssueStatusColor(status)} text={<span style={{ color: colors.textSecondary }}>{getIssueStatusLabel(status, project?.industry)}</span>} />;
+      },
     },
     {
       title: '우선순위', dataIndex: 'priority', key: 'priority', width: 90,
-      render: (priority: IssuePriority) => (
-        <Tag color={getIssuePriorityColor(priority)} bordered={false} style={{ borderRadius: 4 }}>
-          {getIssuePriorityLabel(priority)}
-        </Tag>
-      ),
+      render: (priority: IssuePriority, record: Issue) => {
+        const project = projects.find(p => p.id === record.projectId);
+        return (
+          <Tag color={getIssuePriorityColor(priority)} bordered={false} style={{ borderRadius: 4 }}>
+            {getIssuePriorityLabel(priority, project?.industry)}
+          </Tag>
+        );
+      },
     },
     {
       title: '프로젝트', dataIndex: 'projectId', key: 'projectId', width: 150,
@@ -259,10 +286,10 @@ const Issues: React.FC = () => {
 
   const renderBoardView = () => {
     const statusColumns = [
-      { status: IssueStatus.OPEN, title: '열림', icon: <ExclamationCircleOutlined />, color: '#1890ff' },
-      { status: IssueStatus.IN_PROGRESS, title: '진행중', icon: <SyncOutlined spin />, color: '#faad14' },
-      { status: IssueStatus.RESOLVED, title: '해결됨', icon: <CheckCircleOutlined />, color: '#52c41a' },
-      { status: IssueStatus.CLOSED, title: '종료', icon: <ClockCircleOutlined />, color: '#8c8c8c' },
+      { status: IssueStatus.OPEN, title: getIssueStatusLabel(IssueStatus.OPEN, currentIndustry), icon: <ExclamationCircleOutlined />, color: '#1890ff' },
+      { status: IssueStatus.IN_PROGRESS, title: getIssueStatusLabel(IssueStatus.IN_PROGRESS, currentIndustry), icon: <SyncOutlined spin />, color: '#faad14' },
+      { status: IssueStatus.RESOLVED, title: getIssueStatusLabel(IssueStatus.RESOLVED, currentIndustry), icon: <CheckCircleOutlined />, color: '#52c41a' },
+      { status: IssueStatus.CLOSED, title: getIssueStatusLabel(IssueStatus.CLOSED, currentIndustry), icon: <ClockCircleOutlined />, color: '#8c8c8c' },
     ];
 
     return (
@@ -291,7 +318,9 @@ const Issues: React.FC = () => {
                       <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
                         <Space size={4}>
                           {getTypeIcon(issue.type)}
-                          <Tag style={{ fontSize: 10, padding: '0 4px', background: `${getIssuePriorityColor(issue.priority)}15`, color: getIssuePriorityColor(issue.priority), border: 'none', borderRadius: 4 }}>{getIssuePriorityLabel(issue.priority)}</Tag>
+                          <Tag style={{ fontSize: 10, padding: '0 4px', background: `${getIssuePriorityColor(issue.priority)}15`, color: getIssuePriorityColor(issue.priority), border: 'none', borderRadius: 4 }}>
+                            {getIssuePriorityLabel(issue.priority, currentIndustry)}
+                          </Tag>
                         </Space>
                         <Text type="secondary" style={{ fontSize: 10 }}>#{issue.id.split('-').pop()}</Text>
                       </div>
@@ -303,7 +332,11 @@ const Issues: React.FC = () => {
 
                       {issueLabels.length > 0 && (
                         <div style={{ marginBottom: 12 }}>
-                          {issueLabels.slice(0, 2).map((label) => <Tag key={label.id} style={{ fontSize: 9, padding: '0 4px', background: `${label.color}10`, color: label.color, border: `1px solid ${label.color}20`, borderRadius: 10 }}>{label.name}</Tag>)}
+                          {issueLabels.slice(0, 2).map((label) => (
+                            <Tag key={label.id} style={{ fontSize: 9, padding: '0 4px', background: `${label.color}10`, color: label.color, border: `1px solid ${label.color}20`, borderRadius: 10 }}>
+                              {label.category ? `[${label.category}] ` : ''}{label.name}
+                            </Tag>
+                          ))}
                           {issueLabels.length > 2 && <Tag style={{ fontSize: 9, padding: '0 4px', borderRadius: 10 }}>+{issueLabels.length - 2}</Tag>}
                         </div>
                       )}
@@ -336,17 +369,6 @@ const Issues: React.FC = () => {
           <Text type="secondary">{config.subtitle}</Text>
         </div>
         <Space size="middle">
-          <Select
-            value={industry}
-            onChange={setIndustry}
-            style={{ width: 160 }}
-            options={[
-              { value: IndustryType.SOFTWARE, label: '소프트웨어 IT' },
-              { value: IndustryType.MANUFACTURING, label: '제조 및 생산' },
-              { value: IndustryType.SERVICE, label: '서비스 데스크' },
-              { value: IndustryType.GENERAL, label: '일반 업무' },
-            ]}
-          />
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>새 이슈 등록</Button>
         </Space>
       </div>

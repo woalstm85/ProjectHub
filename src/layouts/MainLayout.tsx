@@ -18,6 +18,8 @@ import {
   SearchOutlined,
   NotificationOutlined,
   BugOutlined,
+  FileDoneOutlined,
+  ReadOutlined,
 } from '@ant-design/icons';
 import { useAuthStore } from '../store/authStore';
 import { useSettings } from '../store/settingsStore';
@@ -133,6 +135,8 @@ const MainLayout: React.FC = () => {
     { key: '/members', icon: <TeamOutlined />, label: '팀원 관리' },
     { key: '/reports', icon: <BarChartOutlined />, label: '보고서' },
     { key: '/communication', icon: <NotificationOutlined />, label: '커뮤니케이션' },
+    { key: '/approvals', icon: <FileDoneOutlined />, label: '전자결재' },
+    { key: '/wiki', icon: <ReadOutlined />, label: '지식 관리' },
   ];
 
   const userMenuItems = [
@@ -299,7 +303,7 @@ const MainLayout: React.FC = () => {
                 <Avatar size={36} icon={<UserOutlined />} src={user?.avatar} style={{ background: `linear-gradient(135deg, ${settings.primaryColor} 0%, ${sidebarTheme.secondaryColor} 100%)` }} />
                 <div style={{ lineHeight: 1.2 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>{user?.name || '사용자'}</div>
-                  <div style={{ fontSize: 11, color: colors.textSecondary }}>관리자</div>
+                  <div style={{ fontSize: 11, color: colors.textSecondary }}>{user?.role === 'admin' ? '관리자' : '팀원'}</div>
                 </div>
               </div>
             </Dropdown>

@@ -1,293 +1,317 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-    Tabs,
+    Layout,
+    Menu,
     List,
-    Button,
-    Tag,
+    Avatar,
     Typography,
     Space,
-    Modal,
-    Form,
     Input,
-    Select,
-    Checkbox,
-    Card,
-    Avatar,
+    Button,
     Badge,
+    Tag,
+    Card,
+    Dropdown,
     Empty,
-    message as antMessage,
 } from 'antd';
 import {
     NotificationOutlined,
-    MailOutlined,
-    PlusOutlined,
+    ProjectOutlined,
     UserOutlined,
     SendOutlined,
-    DeleteOutlined,
-    PushpinFilled,
+    FileTextOutlined,
+    SoundOutlined,
+    ThunderboltOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNoticeStore } from '../store/noticeStore';
-import { useMessageStore, type Message } from '../store/messageStore';
+import { useMessageStore, type Message, type MessageType } from '../store/messageStore';
 import { useMemberStore } from '../store/memberStore';
+import { useProjectStore, IndustryType } from '../store/projectStore';
+import { useAuthStore } from '../store/authStore';
 
+const { Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
+
+// 산업별 메시지 템플릿
+const INDUSTRY_TEMPLATES = {
+    [IndustryType.SOFTWARE]: [
+        { id: 'sw-1', title: '스펙 변경 알림', content: '기획 변경으로 인해 [모듈명]의 스펙이 업데이트되었습니다.' },
+        { id: 'sw-2', title: '배포 요청', content: '현재 [브랜치명] 작업 완료되었습니다. 스테이징 배포 부탁드립니다.' },
+        { id: 'sw-3', title: '긴급 버그 공유', content: '운영 환경에서 [현상] 문제가 발생했습니다. 즉시 확인이 필요합니다.' },
+    ],
+    [IndustryType.MANUFACTURING]: [
+        { id: 'mf-1', title: '설비 이상 감지', content: '[설비명]에서 비정상 소음 및 진동이 감지되었습니다. 긴급 점검 요청합니다.' },
+        { id: 'mf-2', title: '원자재 부족 알림', content: '[자재명]의 재고가 임계치 미만입니다. 추가 발주가 필요합니다.' },
+        { id: 'mf-3', title: '안전 수칙 준수', content: '현재 [공정] 구역 작업 시 보호구 착용 상태를 다시 한번 확인해 주세요.' },
+    ],
+    [IndustryType.SERVICE]: [
+        { id: 'sv-1', title: 'SLA 경고', content: '[고객사] 응대 시한(SLA)이 30분 남았습니다. 빠른 처리 부탁드립니다.' },
+        { id: 'sv-2', title: 'VOC 공유', content: '최근 [이슈명] 관련 고객 불만이 급증하고 있습니다. 대응 가이드 확인 바랍니다.' },
+    ],
+    [IndustryType.GENERAL]: [
+        { id: 'ge-1', title: '회의 요청', content: '[일시]에 [안건] 관련하여 짧은 싱크업 회의를 요청합니다.' },
+        { id: 'ge-2', title: '지출결의 알림', content: '[항목] 관련 지출결의안을 상신했습니다. 결재 검토 부탁드립니다.' },
+    ],
+};
 
 const Communication: React.FC = () => {
-    const [activeTab, setActiveTab] = useState('notices');
-    const [isNoticeModalOpen, setIsNoticeModalOpen] = useState(false);
-    const [isMessageModalOpen, setIsMessageModalOpen] = useState(false);
-    const [form] = Form.useForm();
-    const [messageForm] = Form.useForm();
-
-    const { notices, addNotice, deleteNotice } = useNoticeStore();
-    const { messages, sendMessage, markAsRead, deleteMessage } = useMessageStore();
+    const { user: currentUser } = useAuthStore();
+    const { projects } = useProjectStore();
     const { members } = useMemberStore();
+    const { notices } = useNoticeStore();
+    const { messages, sendMessage } = useMessageStore();
 
-    // Mock current user (assuming first member is logged in)
-    const currentUser = members[0];
+    const [selectedType, setSelectedType] = useState<MessageType | 'NOTICE'>('NOTICE');
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const [messageInput, setMessageInput] = useState('');
 
-    // --- Notice Logic ---
-    const handleNoticeSubmit = (values: any) => {
-        addNotice({
-            title: values.title,
-            content: values.content,
-            authorId: currentUser?.id || 'admin',
-            authorName: currentUser?.name || '관리자',
-            targetType: values.targetType,
-            targetMemberIds: values.targetMemberIds,
-            isImportant: values.isImportant || false,
-        });
-        setIsNoticeModalOpen(false);
-        form.resetFields();
-        antMessage.success('공지사항이 등록되었습니다.');
-    };
+    // --- Data Preparation ---
+    const myProjects = projects.filter(p => !currentUser || p.teamMembers.includes(currentUser.id));
+    const activeProject = projects.find(p => p.id === selectedId);
+    const activeMember = members.find(m => m.id === selectedId);
 
-    const sortedNotices = [...notices].sort((a, b) => {
-        if (a.isImportant && !b.isImportant) return -1;
-        if (!a.isImportant && b.isImportant) return 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+    const filteredMessages = useMemo(() => {
+        if (selectedType === 'CHANNEL') {
+            return messages.filter(m => m.projectId === selectedId).reverse();
+        }
+        if (selectedType === 'DIRECT') {
+            return messages.filter(m =>
+                (m.senderId === currentUser?.id && m.receiverId === selectedId) ||
+                (m.senderId === selectedId && m.receiverId === currentUser?.id)
+            ).reverse();
+        }
+        return [];
+    }, [messages, selectedType, selectedId, currentUser]);
 
-    // --- Message Logic ---
-    const handleMessageSubmit = (values: any) => {
-        const receiver = members.find((m) => m.id === values.receiverId);
-        if (!receiver) return;
+    // --- Handlers ---
+    const handleSend = (text: string = messageInput) => {
+        if (!text.trim() || !selectedId || !currentUser) return;
 
         sendMessage({
-            senderId: currentUser?.id || 'unknown',
-            senderName: currentUser?.name || '알 수 없음',
-            receiverId: receiver.id,
-            receiverName: receiver.name,
-            content: values.content,
+            type: selectedType === 'CHANNEL' ? 'CHANNEL' : 'DIRECT',
+            senderId: currentUser.id,
+            senderName: currentUser.name,
+            projectId: selectedType === 'CHANNEL' ? selectedId : undefined,
+            receiverId: selectedType === 'DIRECT' ? selectedId : undefined,
+            receiverName: selectedType === 'DIRECT' ? activeMember?.name : undefined,
+            content: text,
         });
-        setIsMessageModalOpen(false);
-        messageForm.resetFields();
-        antMessage.success('쪽지를 보냈습니다.');
+        setMessageInput('');
     };
 
-    const myInbox = messages.filter((m) => m.receiverId === currentUser?.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    const myOutbox = messages.filter((m) => m.senderId === currentUser?.id).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    const applyTemplate = (templateContent: string) => {
+        setMessageInput(templateContent);
+    };
 
     // --- Renderers ---
-    const renderNoticeList = () => (
-        <List
-            itemLayout="vertical"
-            dataSource={sortedNotices}
-            renderItem={(item) => (
-                <List.Item
-                    key={item.id}
-                    actions={[
-                        <Text type="secondary">{dayjs(item.createdAt).format('YYYY-MM-DD HH:mm')}</Text>,
-                        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => deleteNotice(item.id)}>삭제</Button>
-                    ]}
-                    style={{ background: item.isImportant ? '#fffbe6' : 'transparent', padding: '16px', borderRadius: '8px', marginBottom: '8px', border: '1px solid #f0f0f0' }}
-                >
-                    <List.Item.Meta
-                        avatar={<Avatar icon={<NotificationOutlined />} style={{ backgroundColor: item.isImportant ? '#faad14' : '#1890ff' }} />}
-                        title={
-                            <Space>
-                                {item.isImportant && <PushpinFilled style={{ color: '#faad14' }} />}
-                                <Text strong>{item.title}</Text>
-                                {item.targetType === 'SELECTED' && <Tag color="purple">일부 공개</Tag>}
-                            </Space>
-                        }
-                        description={`작성자: ${item.authorName}`}
-                    />
-                    <Paragraph ellipsis={{ rows: 2, expandable: true, symbol: '더보기' }}>
-                        {item.content}
-                    </Paragraph>
-                </List.Item>
-            )}
-        />
+    const renderSidebar = () => (
+        <Sider width={280} theme="light" style={{ borderRight: '1px solid #f0f0f0', height: 'calc(100vh - 120px)', overflowY: 'auto' }}>
+            <Menu
+                mode="inline"
+                selectedKeys={[selectedId || 'notice-list']}
+                style={{ height: '100%', borderRight: 0 }}
+                onSelect={({ key }) => {
+                    if (key === 'notice-list') {
+                        setSelectedType('NOTICE');
+                        setSelectedId(null);
+                    } else if (key.startsWith('p-')) {
+                        setSelectedType('CHANNEL');
+                        setSelectedId(key.replace('p-', ''));
+                    } else if (key.startsWith('m-')) {
+                        setSelectedType('DIRECT');
+                        setSelectedId(key.replace('m-', ''));
+                    }
+                }}
+            >
+                <Menu.Item key="notice-list" icon={<NotificationOutlined />}>전체 공지사항</Menu.Item>
+
+                <Menu.ItemGroup key="channels" title="프로젝트 채널">
+                    {myProjects.map(p => (
+                        <Menu.Item key={`p-${p.id}`} icon={<ProjectOutlined />}>
+                            {p.name}
+                        </Menu.Item>
+                    ))}
+                </Menu.ItemGroup>
+
+                <Menu.ItemGroup key="members" title="다이렉트 메시지">
+                    {members.filter(m => m.id !== currentUser?.id).map(m => (
+                        <Menu.Item key={`m-${m.id}`} icon={<Avatar size="small" src={m.avatar} icon={<UserOutlined />} style={{ marginRight: 8 }} />}>
+                            {m.name}
+                        </Menu.Item>
+                    ))}
+                </Menu.ItemGroup>
+            </Menu>
+        </Sider>
     );
 
-    const renderMessageList = (data: Message[], type: 'inbox' | 'outbox') => (
-        <List
-            itemLayout="horizontal"
-            dataSource={data}
-            renderItem={(item) => (
-                <List.Item
-                    actions={[
-                        <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(item.createdAt).format('MM-DD HH:mm')}</Text>,
-                        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => deleteMessage(item.id)} />
-                    ]}
-                    style={{
-                        background: type === 'inbox' && !item.isRead ? '#e6f7ff' : 'transparent',
-                        padding: '12px',
-                        borderRadius: '8px',
-                        marginBottom: '4px'
-                    }}
-                    onClick={() => type === 'inbox' && !item.isRead && markAsRead(item.id)}
-                >
-                    <List.Item.Meta
-                        avatar={<Avatar icon={<UserOutlined />} />}
-                        title={
-                            <Space>
-                                <Text strong>{type === 'inbox' ? `From: ${item.senderName}` : `To: ${item.receiverName}`}</Text>
-                                {type === 'inbox' && !item.isRead && <Badge status="processing" text="안 읽음" />}
-                            </Space>
-                        }
-                        description={item.content}
-                    />
-                </List.Item>
-            )}
-        />
+    const renderChatHeader = () => {
+        let title = "커뮤니케이션 허브";
+        let subTitle = "원활한 협업을 위한 메시징 센터";
+        let extraInfo = null;
+
+        if (selectedType === 'NOTICE') {
+            title = "전체 공지사항";
+        } else if (selectedType === 'CHANNEL' && activeProject) {
+            title = activeProject.name;
+            subTitle = activeProject.description;
+            extraInfo = <Tag color="blue">{activeProject.industry}</Tag>;
+        } else if (selectedType === 'DIRECT' && activeMember) {
+            title = activeMember.name;
+            subTitle = activeMember.role;
+        }
+
+        return (
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderRadius: '12px 12px 0 0' }}>
+                <div>
+                    <Title level={4} style={{ margin: 0 }}>{title}</Title>
+                    <Text type="secondary" style={{ fontSize: 13 }}>{subTitle}</Text>
+                </div>
+                {extraInfo}
+            </div>
+        );
+    };
+
+    const renderNoticeFeed = () => (
+        <div style={{ padding: 24 }}>
+            <List
+                dataSource={[...notices].sort((a, b) => (a.isImportant === b.isImportant ? 0 : a.isImportant ? -1 : 1))}
+                renderItem={item => (
+                    <Card style={{ marginBottom: 12, borderRadius: 12, border: item.isImportant ? '1px solid #faad14' : '1px solid #f0f0f0', background: item.isImportant ? '#fffbe6' : '#fff' }}>
+                        <Space align="start" style={{ width: '100%' }}>
+                            <Avatar size="large" icon={item.isImportant ? <SoundOutlined /> : <NotificationOutlined />} style={{ backgroundColor: item.isImportant ? '#faad14' : '#1890ff' }} />
+                            <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <Text strong style={{ fontSize: 16 }}>{item.title}</Text>
+                                    <Text type="secondary" style={{ fontSize: 12 }}>{dayjs(item.createdAt).format('YYYY-MM-DD')}</Text>
+                                </div>
+                                <Paragraph style={{ marginTop: 8 }}>{item.content}</Paragraph>
+                                <Space size={[0, 4]} wrap>
+                                    <Tag icon={<UserOutlined />}>{item.authorName}</Tag>
+                                    {item.isImportant && <Tag color="warning">중요</Tag>}
+                                </Space>
+                            </div>
+                        </Space>
+                    </Card>
+                )}
+            />
+        </div>
     );
+
+    const renderMessageFeed = () => (
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column-reverse' }}>
+            {filteredMessages.length > 0 ? (
+                <List
+                    dataSource={filteredMessages}
+                    renderItem={(msg: Message) => {
+                        const isMine = msg.senderId === currentUser?.id;
+                        return (
+                            <div style={{ display: 'flex', justifyContent: isMine ? 'flex-end' : 'flex-start', marginBottom: 16 }}>
+                                <div style={{ display: 'flex', flexDirection: isMine ? 'row-reverse' : 'row', maxWidth: '70%', alignItems: 'flex-start' }}>
+                                    {!isMine && <Avatar size="small" icon={<UserOutlined />} style={{ marginTop: 4, flexShrink: 0 }} />}
+                                    <div style={{ margin: isMine ? '0 12px 0 0' : '0 0 0 12px' }}>
+                                        {!isMine && <div style={{ fontSize: 12, color: '#8c8c8c', marginBottom: 4 }}>{msg.senderName}</div>}
+                                        <div style={{
+                                            background: isMine ? '#1890ff' : '#f5f5f5',
+                                            color: isMine ? '#fff' : '#262626',
+                                            padding: '8px 16px',
+                                            borderRadius: isMine ? '16px 16px 0 16px' : '16px 16px 16px 0',
+                                            boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+                                        }}>
+                                            {msg.content}
+                                        </div>
+                                        <div style={{ fontSize: 10, color: '#bfbfbf', marginTop: 4, textAlign: isMine ? 'right' : 'left' }}>
+                                            {dayjs(msg.createdAt).format('HH:mm')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    }}
+                />
+            ) : (
+                <Empty description="메시지가 없습니다. 대화를 시작해 보세요!" style={{ margin: 'auto' }} />
+            )}
+        </div>
+    );
+
+    const renderMessageInput = () => {
+        const templates = (activeProject ? INDUSTRY_TEMPLATES[activeProject.industry] : null) || INDUSTRY_TEMPLATES[IndustryType.GENERAL];
+
+        const templateItems = templates.map(t => ({
+            key: t.id,
+            label: (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <FileTextOutlined style={{ color: '#1890ff' }} />
+                    <div>
+                        <div style={{ fontWeight: 'bold' }}>{t.title}</div>
+                        <div style={{ fontSize: 11, color: '#8c8c8c' }}>{t.content.substring(0, 20)}...</div>
+                    </div>
+                </div>
+            ),
+            onClick: () => applyTemplate(t.content)
+        }));
+
+        return (
+            <div style={{ padding: '16px 24px', background: '#fff', borderTop: '1px solid #f0f0f0', borderRadius: '0 0 12px 12px' }}>
+                <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end' }}>
+                    <Dropdown menu={{ items: templateItems }} placement="topLeft">
+                        <Button icon={<ThunderboltOutlined />} type="dashed" shape="circle" size="large" />
+                    </Dropdown>
+                    <Input.TextArea
+                        autoSize={{ minRows: 1, maxRows: 4 }}
+                        placeholder="메시지를 입력하세요 (Shift + Enter로 전송)"
+                        value={messageInput}
+                        onChange={e => setMessageInput(e.target.value)}
+                        onKeyDown={e => {
+                            if (e.key === 'Enter' && e.shiftKey) {
+                                e.preventDefault();
+                                handleSend();
+                            }
+                        }}
+                        style={{ borderRadius: 12 }}
+                    />
+                    <Button
+                        type="primary"
+                        icon={<SendOutlined />}
+                        shape="circle"
+                        size="large"
+                        onClick={() => handleSend()}
+                        disabled={!messageInput.trim()}
+                    />
+                </div>
+                <div style={{ marginTop: 8, display: 'flex', gap: 16 }}>
+                    <Badge status="processing" text={<Text type="secondary" style={{ fontSize: 11 }}>팀원들과 실시간으로 소통하세요.</Text>} />
+                </div>
+            </div>
+        );
+    };
 
     return (
-        <div className="communication-container">
-            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <Title level={2} style={{ margin: 0 }}>커뮤니케이션</Title>
-                <Space>
-                    {activeTab === 'notices' ? (
-                        <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsNoticeModalOpen(true)}>
-                            공지사항 작성
-                        </Button>
-                    ) : (
-                        <Button type="primary" icon={<SendOutlined />} onClick={() => setIsMessageModalOpen(true)}>
-                            쪽지 보내기
-                        </Button>
-                    )}
-                </Space>
-            </div>
-
-            <Card bordered={false} style={{ borderRadius: 12 }}>
-                <Tabs
-                    activeKey={activeTab}
-                    onChange={setActiveTab}
-                    items={[
-                        {
-                            key: 'notices',
-                            label: (
-                                <span>
-                                    <NotificationOutlined />
-                                    공지사항
-                                </span>
-                            ),
-                            children: notices.length > 0 ? renderNoticeList() : <Empty description="등록된 공지사항이 없습니다." />,
-                        },
-                        {
-                            key: 'messages',
-                            label: (
-                                <span>
-                                    <MailOutlined />
-                                    쪽지함
-                                </span>
-                            ),
-                            children: (
-                                <Tabs
-                                    type="card"
-                                    items={[
-                                        {
-                                            key: 'inbox',
-                                            label: `받은 쪽지함 (${myInbox.filter(m => !m.isRead).length})`,
-                                            children: myInbox.length > 0 ? renderMessageList(myInbox, 'inbox') : <Empty description="받은 쪽지가 없습니다." />,
-                                        },
-                                        {
-                                            key: 'outbox',
-                                            label: '보낸 쪽지함',
-                                            children: myOutbox.length > 0 ? renderMessageList(myOutbox, 'outbox') : <Empty description="보낸 쪽지가 없습니다." />,
-                                        },
-                                    ]}
-                                />
-                            ),
-                        },
-                    ]}
-                />
-            </Card>
-
-            {/* Notice Modal */}
-            <Modal
-                title="공지사항 작성"
-                open={isNoticeModalOpen}
-                onOk={() => form.submit()}
-                onCancel={() => setIsNoticeModalOpen(false)}
-                okText="등록"
-                cancelText="취소"
-            >
-                <Form form={form} layout="vertical" onFinish={handleNoticeSubmit} initialValues={{ targetType: 'ALL', isImportant: false }}>
-                    <Form.Item name="title" label="제목" rules={[{ required: true, message: '제목을 입력해주세요' }]}>
-                        <Input placeholder="공지 제목" />
-                    </Form.Item>
-                    <Form.Item name="targetType" label="공지 대상">
-                        <Select>
-                            <Select.Option value="ALL">전체 공개</Select.Option>
-                            <Select.Option value="SELECTED">특정 멤버</Select.Option>
-                        </Select>
-                    </Form.Item>
-                    <Form.Item
-                        noStyle
-                        shouldUpdate={(prev, current) => prev.targetType !== current.targetType}
+        <div style={{ padding: '0 0 24px 0', height: '100%', minHeight: '600px' }}>
+            <Layout style={{ background: 'transparent' }}>
+                {renderSidebar()}
+                <Content style={{ padding: '0 0 0 24px', display: 'flex', flexDirection: 'column' }}>
+                    <Card
+                        bordered={false}
+                        style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                        bodyStyle={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}
                     >
-                        {({ getFieldValue }) =>
-                            getFieldValue('targetType') === 'SELECTED' ? (
-                                <Form.Item name="targetMemberIds" label="멤버 선택" rules={[{ required: true, message: '멤버를 선택해주세요' }]}>
-                                    <Select mode="multiple" placeholder="멤버를 선택하세요">
-                                        {members.map((m) => (
-                                            <Select.Option key={m.id} value={m.id}>
-                                                {m.name}
-                                            </Select.Option>
-                                        ))}
-                                    </Select>
-                                </Form.Item>
-                            ) : null
-                        }
-                    </Form.Item>
-                    <Form.Item name="content" label="내용" rules={[{ required: true, message: '내용을 입력해주세요' }]}>
-                        <TextArea rows={4} placeholder="공지 내용" />
-                    </Form.Item>
-                    <Form.Item name="isImportant" valuePropName="checked">
-                        <Checkbox>중요 공지로 설정 (상단 고정)</Checkbox>
-                    </Form.Item>
-                </Form>
-            </Modal>
+                        {renderChatHeader()}
 
-            {/* Message Modal */}
-            <Modal
-                title="쪽지 보내기"
-                open={isMessageModalOpen}
-                onOk={() => messageForm.submit()}
-                onCancel={() => setIsMessageModalOpen(false)}
-                okText="전송"
-                cancelText="취소"
-            >
-                <Form form={messageForm} layout="vertical" onFinish={handleMessageSubmit}>
-                    <Form.Item name="receiverId" label="받는 사람" rules={[{ required: true, message: '받는 사람을 선택해주세요' }]}>
-                        <Select placeholder="멤버 선택">
-                            {members.filter(m => m.id !== currentUser?.id).map((m) => (
-                                <Select.Option key={m.id} value={m.id}>
-                                    {m.name}
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Form.Item>
-                    <Form.Item name="content" label="내용" rules={[{ required: true, message: '내용을 입력해주세요' }]}>
-                        <TextArea rows={4} placeholder="메시지 내용" />
-                    </Form.Item>
-                </Form>
-            </Modal>
+                        {selectedType === 'NOTICE' ? (
+                            <div style={{ flex: 1, overflowY: 'auto' }}>
+                                {renderNoticeFeed()}
+                            </div>
+                        ) : (
+                            <>
+                                {renderMessageFeed()}
+                                {renderMessageInput()}
+                            </>
+                        )}
+                    </Card>
+                </Content>
+            </Layout>
         </div>
     );
 };

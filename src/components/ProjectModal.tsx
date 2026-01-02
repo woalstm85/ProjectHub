@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Select, DatePicker, InputNumber, Row, Col } from 'antd';
 import dayjs from 'dayjs';
-import { ProjectStatus, ProjectPriority } from '../store/projectStore';
+import { ProjectStatus, ProjectPriority, IndustryType } from '../store/projectStore';
 import { useMemberStore } from '../store/memberStore';
 
 const { TextArea } = Input;
@@ -67,6 +67,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
         [ProjectPriority.URGENT]: '긴급',
     };
 
+    const industryLabels: Record<IndustryType, string> = {
+        [IndustryType.SOFTWARE]: 'IT/소프트웨어',
+        [IndustryType.MANUFACTURING]: '제조/공정',
+        [IndustryType.SERVICE]: '서비스/운영',
+        [IndustryType.GENERAL]: '일반업무',
+    };
+
     return (
         <Modal
             title={title}
@@ -95,7 +102,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                 </Form.Item>
 
                 <Row gutter={16}>
-                    <Col span={12}>
+                    <Col span={8}>
                         <Form.Item
                             name="status"
                             label="상태"
@@ -110,7 +117,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                             </Select>
                         </Form.Item>
                     </Col>
-                    <Col span={12}>
+                    <Col span={8}>
                         <Form.Item
                             name="priority"
                             label="우선순위"
@@ -118,6 +125,21 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                         >
                             <Select placeholder="우선순위를 선택하세요">
                                 {Object.entries(priorityLabels).map(([key, label]) => (
+                                    <Select.Option key={key} value={key}>
+                                        {label}
+                                    </Select.Option>
+                                ))}
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                        <Form.Item
+                            name="industry"
+                            label="산업군"
+                            rules={[{ required: true, message: '산업군을 선택해주세요' }]}
+                        >
+                            <Select placeholder="카테고리 선택">
+                                {Object.entries(industryLabels).map(([key, label]) => (
                                     <Select.Option key={key} value={key}>
                                         {label}
                                     </Select.Option>

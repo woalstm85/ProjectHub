@@ -24,6 +24,8 @@ import {
 import { useTaskStore, TaskStatus } from '../store/taskStore';
 import { useProjectStore } from '../store/projectStore';
 import { useSettings } from '../store/settingsStore';
+import { useMessageStore } from '../store/messageStore';
+import { useAuthStore } from '../store/authStore';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import 'dayjs/locale/ko';
@@ -49,6 +51,8 @@ const NotificationCenter: React.FC = () => {
   const { tasks } = useTaskStore();
   const { projects } = useProjectStore();
   const { settings } = useSettings();
+  const { messages, markAsRead: markMessageAsRead, deleteMessage: deleteStoreMessage } = useMessageStore();
+  const { user } = useAuthStore();
 
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
@@ -115,6 +119,22 @@ const NotificationCenter: React.FC = () => {
         });
     }
 
+    // 메시지/알림 추가
+    if (user) {
+      messages
+        .filter(m => m.receiverId === user.memberId || m.receiverId === user.id)
+        .forEach(m => {
+          newNotifications.push({
+            id: `msg-${m.id}`,
+            type: m.content.includes('프로젝트') ? 'project' : 'assigned',
+            title: m.content.includes('프로젝트') ? '프로젝트 알림' : '새 메시지',
+            description: m.content,
+            timestamp: m.createdAt,
+            read: m.isRead,
+          });
+        });
+    }
+
     newNotifications.sort((a, b) => {
       if (a.type === 'overdue' && b.type !== 'overdue') return -1;
       if (b.type === 'overdue' && a.type !== 'overdue') return 1;
@@ -124,14 +144,22 @@ const NotificationCenter: React.FC = () => {
     });
 
     setNotifications(newNotifications);
-  }, [tasks, projects, settings.notifications]);
+  }, [tasks, projects, settings.notifications, messages, user]);
 
   const markAsRead = (id: string) => {
-    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    if (id.startsWith('msg-')) {
+      markMessageAsRead(id.replace('msg-', ''));
+    } else {
+      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    }
   };
 
   const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    if (id.startsWith('msg-')) {
+      deleteStoreMessage(id.replace('msg-', ''));
+    } else {
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    }
   };
 
   const markAllAsRead = () => {

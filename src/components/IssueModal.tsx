@@ -13,7 +13,6 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
-  IndustryType,
   IssueType,
   IssueStatus,
   IssuePriority,
@@ -29,7 +28,7 @@ import {
   getIssueSeverityColor,
   useIssueStore,
 } from '../store/issueStore';
-import { useProjectStore } from '../store/projectStore';
+import { useProjectStore, IndustryType } from '../store/projectStore';
 import { useMemberStore } from '../store/memberStore';
 
 const { TextArea } = Input;
@@ -46,6 +45,8 @@ interface IssueModalProps {
 
 const industryConfigs = {
   [IndustryType.SOFTWARE]: {
+    titlePlaceholder: '이슈의 핵심 내용을 간결하게 적어주세요 (예: 로그인 API 500 에러)',
+    descriptionPlaceholder: '이슈의 영향도, 원인 추측, 비즈니스 영향 등을 설명해주세요',
     environmentLabel: '환경',
     environmentPlaceholder: '예: Production, Windows 10, Chrome 120',
     stepsLabel: '재현 단계',
@@ -54,6 +55,8 @@ const industryConfigs = {
     showBugDetails: [IssueType.BUG] as IssueType[],
   },
   [IndustryType.MANUFACTURING]: {
+    titlePlaceholder: '발생 현상을 요약해주세요 (예: #3 사출기 히터 온도 제어 불능)',
+    descriptionPlaceholder: '발생 지점, 설비 상태, 조업 손실 예상 규모 등을 적어주세요',
     environmentLabel: '공정/설비',
     environmentPlaceholder: '예: A-1 라인, CNC 밀링기 #4',
     stepsLabel: '발생 상황 상세',
@@ -62,6 +65,8 @@ const industryConfigs = {
     showBugDetails: [IssueType.DEFECT, IssueType.EQUIPMENT] as IssueType[],
   },
   [IndustryType.SERVICE]: {
+    titlePlaceholder: '문의 및 장애 내용을 요약해주세요 (예: 결제 완료 후 포인트 미적립 민원 증폭)',
+    descriptionPlaceholder: '인입 채널, 고객 불만 수준, 대응 가능 시한 등을 적어주세요',
     environmentLabel: '채널/환경',
     environmentPlaceholder: '예: 카카오톡 상담, 콜센터 2번 노드',
     stepsLabel: '상세 정황',
@@ -70,6 +75,8 @@ const industryConfigs = {
     showBugDetails: [IssueType.BUG] as IssueType[],
   },
   [IndustryType.GENERAL]: {
+    titlePlaceholder: '이슈의 제목을 입력하세요',
+    descriptionPlaceholder: '상세 내용을 입력하세요',
     environmentLabel: '부서/장소',
     environmentPlaceholder: '예: 영업 1팀, 서울 본사 4층 회의실',
     stepsLabel: '이슈 발생 경로',
@@ -90,28 +97,62 @@ const IssueModal: React.FC<IssueModalProps> = ({
   const [form] = Form.useForm();
   const { projects } = useProjectStore();
   const { members } = useMemberStore();
-  const { labels, industry } = useIssueStore();
+  const { labels, initializeLabels } = useIssueStore();
   const issueType = Form.useWatch('type', form);
+  const projectId = Form.useWatch('projectId', form);
 
-  const config = industryConfigs[industry] || industryConfigs[IndustryType.SOFTWARE];
+  // 선택된 프로젝트의 산업군 확인
+  const selectedProject = projects.find(p => p.id === projectId);
+  const currentIndustry = selectedProject?.industry;
+
+  const config = (currentIndustry ? industryConfigs[currentIndustry as keyof typeof industryConfigs] : null) || industryConfigs[IndustryType.SOFTWARE];
 
   useEffect(() => {
     if (open) {
+      const defaults = {
+        type: config.allowedTypes[0] as any,
+        status: IssueStatus.OPEN,
+        priority: IssuePriority.MEDIUM,
+      };
+
       if (initialValues) {
         form.setFieldsValue({
+          ...defaults,
           ...initialValues,
           dueDate: initialValues.dueDate ? dayjs(initialValues.dueDate) : undefined,
         });
       } else {
         form.resetFields();
-        form.setFieldsValue({
-          type: config.allowedTypes[0] as any,
-          status: IssueStatus.OPEN,
-          priority: IssuePriority.MEDIUM,
-        });
+        form.setFieldsValue(defaults);
+      }
+
+      // 라벨 데이터 동기화 및 초기화
+      initializeLabels();
+    }
+  }, [open, initialValues, form, initializeLabels]);
+
+  // 산업군 변경 시 유효하지 않은 이슈 타입 자동 전환
+  useEffect(() => {
+    if (open && projectId && !config.allowedTypes.includes(issueType)) {
+      form.setFieldsValue({ type: config.allowedTypes[0] });
+    }
+  }, [open, projectId, config.allowedTypes, issueType, form]);
+
+  // 산업군 변경 시 유효하지 않은 라벨 제거
+  useEffect(() => {
+    if (open && projectId && currentIndustry) {
+      const currentValues = form.getFieldValue('labels') || [];
+      const validLabelIds = labels
+        .filter(l => l.industry === currentIndustry || l.industry === IndustryType.GENERAL)
+        .map(l => l.id);
+
+      const filtered = currentValues.filter((id: string) => validLabelIds.includes(id));
+
+      if (filtered.length !== currentValues.length) {
+        form.setFieldsValue({ labels: filtered });
       }
     }
-  }, [open, initialValues, form, config.allowedTypes]);
+  }, [open, projectId, currentIndustry, labels, form]);
 
   const handleOk = async () => {
     try {
@@ -126,9 +167,9 @@ const IssueModal: React.FC<IssueModalProps> = ({
     }
   };
 
-  const typeOptions = config.allowedTypes.map(type => ({
+  const typeOptions = config.allowedTypes.map((type: IssueType) => ({
     value: type,
-    label: getIssueTypeLabel(type),
+    label: getIssueTypeLabel(type, currentIndustry),
     icon: type === IssueType.BUG ? <BugOutlined /> :
       type === IssueType.FEATURE ? <BulbOutlined /> :
         type === IssueType.IMPROVEMENT ? <RiseOutlined /> :
@@ -142,14 +183,14 @@ const IssueModal: React.FC<IssueModalProps> = ({
 
   const statusOptions = Object.values(IssueStatus).map((status) => ({
     value: status,
-    label: getIssueStatusLabel(status),
+    label: getIssueStatusLabel(status, currentIndustry),
     color: getIssueStatusColor(status),
     icon: <div style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: getIssueStatusColor(status) }} />
   }));
 
   const priorityOptions = Object.values(IssuePriority).map((p) => ({
     value: p,
-    label: getIssuePriorityLabel(p),
+    label: getIssuePriorityLabel(p, currentIndustry),
     color: getIssuePriorityColor(p),
   }));
 
@@ -171,13 +212,13 @@ const IssueModal: React.FC<IssueModalProps> = ({
         <Row gutter={16}>
           <Col span={16}>
             <Form.Item name="title" label={<Text strong>이슈 제목</Text>} rules={[{ required: true, message: '제목을 입력해주세요' }]}>
-              <Input placeholder="이슈를 한 눈에 파악할 수 있는 제목" style={{ borderRadius: 6 }} />
+              <Input placeholder={config.titlePlaceholder} style={{ borderRadius: 6 }} />
             </Form.Item>
           </Col>
           <Col span={8}>
             <Form.Item name="type" label={<Text strong>이슈 타입</Text>} rules={[{ required: true }]}>
               <Select style={{ borderRadius: 6 }}>
-                {typeOptions.map((opt) => (
+                {typeOptions.map((opt: any) => (
                   <Select.Option key={opt.value} value={opt.value}>
                     <Space><span style={{ color: opt.color }}>{opt.icon}</span>{opt.label}</Space>
                   </Select.Option>
@@ -228,18 +269,18 @@ const IssueModal: React.FC<IssueModalProps> = ({
                 <Select placeholder="심각도 선택" style={{ borderRadius: 6 }}>
                   {Object.values(IssueSeverity).map((severity) => (
                     <Select.Option key={severity} value={severity}>
-                      <Badge color={getIssueSeverityColor(severity)} text={getIssueSeverityLabel(severity)} />
+                      <Badge color={getIssueSeverityColor(severity)} text={getIssueSeverityLabel(severity, currentIndustry)} />
                     </Select.Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={industry === IndustryType.MANUFACTURING ? 8 : 16}>
+            <Col span={currentIndustry === IndustryType.MANUFACTURING ? 8 : 16}>
               <Form.Item name="environment" label={<Text strong>{config.environmentLabel}</Text>}>
                 <Input placeholder={config.environmentPlaceholder} style={{ borderRadius: 6 }} />
               </Form.Item>
             </Col>
-            {industry === IndustryType.MANUFACTURING && (
+            {currentIndustry === IndustryType.MANUFACTURING && (
               <Col span={8}>
                 <Form.Item name={['metadata', 'lineId']} label={<Text strong>라인 ID</Text>}>
                   <Input placeholder="예: L-101" style={{ borderRadius: 6 }} />
@@ -253,14 +294,16 @@ const IssueModal: React.FC<IssueModalProps> = ({
           <Col span={12}>
             <Form.Item name="assigneeId" label={<Text strong>담당자</Text>}>
               <Select placeholder="담당자 선택" allowClear style={{ borderRadius: 6 }}>
-                {members.map((member) => (
-                  <Select.Option key={member.id} value={member.id}>
-                    <Space>
-                      <Avatar size="small" style={{ backgroundColor: '#bae7ff', color: '#096dd9' }}>{member.name[0]}</Avatar>
-                      {member.name} <Text type="secondary" style={{ fontSize: 12 }}>({member.role})</Text>
-                    </Space>
-                  </Select.Option>
-                ))}
+                {members
+                  .filter(member => !projectId || selectedProject?.teamMembers.includes(member.id))
+                  .map((member) => (
+                    <Select.Option key={member.id} value={member.id}>
+                      <Space>
+                        <Avatar size="small" style={{ backgroundColor: '#bae7ff', color: '#096dd9' }}>{member.name[0]}</Avatar>
+                        {member.name} <Text type="secondary" style={{ fontSize: 12 }}>({member.role})</Text>
+                      </Space>
+                    </Select.Option>
+                  ))}
               </Select>
             </Form.Item>
           </Col>
@@ -271,21 +314,50 @@ const IssueModal: React.FC<IssueModalProps> = ({
           </Col>
         </Row>
 
-        <Form.Item name="labels" label={<Text strong>라벨</Text>}>
-          <Select mode="multiple" placeholder="관련 라벨 선택" allowClear style={{ borderRadius: 6 }}>
-            {labels.map((label) => (
-              <Select.Option key={label.id} value={label.id}>
-                <Space>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: label.color }} />
-                  {label.name}
-                </Space>
-              </Select.Option>
+        <Form.Item
+          name="labels"
+          label={<Text strong>라벨</Text>}
+          help={!projectId ? <Text type="secondary" style={{ fontSize: 12 }}>프로젝트를 먼저 선택하면 관련 라벨이 표시됩니다.</Text> : null}
+        >
+          <Select
+            mode="multiple"
+            placeholder={projectId ? "관련 라벨 선택" : "프로젝트를 먼저 선택해주세요"}
+            disabled={!projectId}
+            allowClear
+            showSearch
+            optionFilterProp="label"
+            style={{ borderRadius: 6 }}
+          >
+            {Object.entries(
+              labels
+                .filter(label => {
+                  if (!projectId) return false;
+                  // 해당 산업군 라벨 또는 공통 라벨 표시
+                  return label.industry === currentIndustry || label.industry === IndustryType.GENERAL;
+                })
+                .reduce((acc, label) => {
+                  const cat = label.category || '기타';
+                  if (!acc[cat]) acc[cat] = [];
+                  acc[cat].push(label);
+                  return acc;
+                }, {} as Record<string, typeof labels>)
+            ).map(([category, items]) => (
+              <Select.OptGroup key={category} label={category}>
+                {items.map((label) => (
+                  <Select.Option key={label.id} value={label.id} label={label.name}>
+                    <Space>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: label.color }} />
+                      {label.name}
+                    </Space>
+                  </Select.Option>
+                ))}
+              </Select.OptGroup>
             ))}
           </Select>
         </Form.Item>
 
         <Form.Item name="description" label={<Text strong>상세 설명</Text>} rules={[{ required: true, message: '설명을 입력해주세요' }]}>
-          <TextArea rows={4} placeholder="이슈의 배경, 발생 경로 등 상세 내용을 입력하세요" style={{ borderRadius: 6 }} />
+          <TextArea rows={4} placeholder={config.descriptionPlaceholder} style={{ borderRadius: 6 }} />
         </Form.Item>
 
         {config.showBugDetails.includes(issueType) && (

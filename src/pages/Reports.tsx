@@ -43,7 +43,7 @@ import {
 import { useProjectStore, ProjectStatus } from '../store/projectStore';
 import { useTaskStore, TaskStatus, TaskPriority } from '../store/taskStore';
 import { useMemberStore } from '../store/memberStore';
-import { useIssueStore, IssueStatus, IssuePriority, IssueType, getIssueTypeLabel, getIssueStatusLabel, getIssuePriorityLabel } from '../store/issueStore';
+import { useIssueStore, type Issue, IssueStatus, IssuePriority, IssueType, getIssueTypeLabel, getIssueStatusLabel, getIssuePriorityLabel } from '../store/issueStore';
 import { useActivityStore } from '../store/activityStore';
 import { useSettings } from '../store/settingsStore';
 import {
@@ -106,7 +106,7 @@ const Reports: React.FC = () => {
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
   const { members } = useMemberStore();
-  const { issues } = useIssueStore();
+  const { issues, labels } = useIssueStore();
   const { activities } = useActivityStore();
   const { effectiveTheme } = useSettings();
 
@@ -693,14 +693,21 @@ const Reports: React.FC = () => {
     XLSX.utils.book_append_sheet(wb, memberSheet, '팀원성과');
 
     // 이슈 시트
-    const issueSheet = XLSX.utils.json_to_sheet(filteredIssues.map(i => ({
-      제목: i.title,
-      유형: getIssueTypeLabel(i.type),
-      상태: getIssueStatusLabel(i.status),
-      우선순위: getIssuePriorityLabel(i.priority),
-      생성일: dayjs(i.createdAt).format('YYYY-MM-DD'),
-      담당자: i.assigneeName || '미지정',
-    })));
+    const issueSheet = XLSX.utils.json_to_sheet(filteredIssues.map(i => {
+      const project = projects.find(p => p.id === i.projectId);
+      const issueLabels = labels.filter(l => i.labels.includes(l.id));
+      const labeledNames = issueLabels.map(l => `${l.category ? `[${l.category}] ` : ''}${l.name}`).join(', ');
+
+      return {
+        제목: i.title,
+        유형: getIssueTypeLabel(i.type, project?.industry),
+        상태: getIssueStatusLabel(i.status, project?.industry),
+        우선순위: getIssuePriorityLabel(i.priority, project?.industry),
+        라벨: labeledNames,
+        생성일: dayjs(i.createdAt).format('YYYY-MM-DD'),
+        담당자: i.assigneeName || '미지정',
+      };
+    }));
     XLSX.utils.book_append_sheet(wb, issueSheet, '이슈목록');
 
     XLSX.writeFile(wb, `project_report_${dayjs().format('YYYYMMDD')}.xlsx`);
@@ -1162,7 +1169,12 @@ const Reports: React.FC = () => {
 
     const issueColumns = [
       { title: '제목', dataIndex: 'title', key: 'title', ellipsis: true, render: (text: string) => <Text strong>{text}</Text> },
-      { title: '유형', dataIndex: 'type', key: 'type', render: (type: IssueType) => <Tag>{getIssueTypeLabel(type)}</Tag> },
+      {
+        title: '유형', dataIndex: 'type', key: 'type', render: (type: IssueType, record: Issue) => {
+          const project = projects.find(p => p.id === record.projectId);
+          return <Tag>{getIssueTypeLabel(type, project?.industry)}</Tag>;
+        }
+      },
       { title: '상태', dataIndex: 'status', key: 'status', render: (status: IssueStatus) => <Tag color={status === IssueStatus.RESOLVED ? 'green' : status === IssueStatus.IN_PROGRESS ? 'blue' : 'default'}>{getIssueStatusLabel(status)}</Tag> },
       { title: '우선순위', dataIndex: 'priority', key: 'priority', render: (p: IssuePriority) => <Tag color={p === IssuePriority.CRITICAL ? 'red' : p === IssuePriority.HIGH ? 'orange' : 'default'}>{getIssuePriorityLabel(p)}</Tag> },
       { title: '담당자', dataIndex: 'assigneeName', key: 'assigneeName', render: (name: string) => name || <Text type="secondary">미지정</Text> },
