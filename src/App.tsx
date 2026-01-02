@@ -87,6 +87,7 @@ const ThemedApp: React.FC = () => {
             <Route path="approvals" element={<Approvals />} />
             <Route path="wiki" element={<Wiki />} />
             <Route path="drive" element={<Drive />} />
+            <Route path="support" element={<Support />} />
           </Route>
 
           {/* 404 처리 */}

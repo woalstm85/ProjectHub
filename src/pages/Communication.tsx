@@ -29,6 +29,7 @@ import { useMessageStore, type Message, type MessageType } from '../store/messag
 import { useMemberStore } from '../store/memberStore';
 import { useProjectStore, IndustryType } from '../store/projectStore';
 import { useAuthStore } from '../store/authStore';
+import { useSettings } from '../store/settingsStore';
 
 const { Sider, Content } = Layout;
 const { Title, Text, Paragraph } = Typography;
@@ -61,6 +62,8 @@ const Communication: React.FC = () => {
     const { members } = useMemberStore();
     const { notices } = useNoticeStore();
     const { messages, sendMessage } = useMessageStore();
+    const { effectiveTheme } = useSettings();
+    const isDark = effectiveTheme === 'dark';
 
     const [selectedType, setSelectedType] = useState<MessageType | 'NOTICE'>('NOTICE');
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -177,7 +180,13 @@ const Communication: React.FC = () => {
             <List
                 dataSource={[...notices].sort((a, b) => (a.isImportant === b.isImportant ? 0 : a.isImportant ? -1 : 1))}
                 renderItem={item => (
-                    <Card style={{ marginBottom: 12, borderRadius: 12, border: item.isImportant ? '1px solid #faad14' : '1px solid #f0f0f0', background: item.isImportant ? '#fffbe6' : '#fff' }}>
+                    <Card style={{
+                        marginBottom: 12,
+                        borderRadius: 12,
+                        border: item.isImportant ? '1px solid #faad14' : (isDark ? '1px solid #303030' : '1px solid #e0e0e0'),
+                        background: item.isImportant ? (isDark ? '#433610' : '#fffbe6') : (isDark ? '#1f1f1f' : '#ffffff'),
+                        boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)'
+                    }}>
                         <Space align="start" style={{ width: '100%' }}>
                             <Avatar size="large" icon={item.isImportant ? <SoundOutlined /> : <NotificationOutlined />} style={{ backgroundColor: item.isImportant ? '#faad14' : '#1890ff' }} />
                             <div style={{ flex: 1 }}>
@@ -294,7 +303,15 @@ const Communication: React.FC = () => {
                 <Content style={{ padding: '0 0 0 24px', display: 'flex', flexDirection: 'column' }}>
                     <Card
                         bordered={false}
-                        style={{ height: 'calc(100vh - 120px)', display: 'flex', flexDirection: 'column', borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                        style={{
+                            height: 'calc(100vh - 120px)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            borderRadius: 12,
+                            boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
+                            border: isDark ? '1px solid #303030' : '1px solid #e0e0e0',
+                            background: isDark ? '#1f1f1f' : '#ffffff'
+                        }}
                         bodyStyle={{ display: 'flex', flexDirection: 'column', height: '100%', padding: 0 }}
                     >
                         {renderChatHeader()}

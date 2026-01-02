@@ -35,6 +35,7 @@ import { useApprovalStore, type Approval, type ApprovalStatus, type ApprovalType
 import { useAuthStore } from '../store/authStore';
 import { useProjectStore } from '../store/projectStore';
 import { useMemberStore } from '../store/memberStore';
+import { useSettings } from '../store/settingsStore';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -44,6 +45,8 @@ const Approvals: React.FC = () => {
     const { approvals, requestApproval, processApproval } = useApprovalStore();
     const { projects } = useProjectStore();
     const { members } = useMemberStore();
+    const { effectiveTheme } = useSettings();
+    const isDark = effectiveTheme === 'dark';
 
     const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -196,7 +199,12 @@ const Approvals: React.FC = () => {
                 </Button>
             </div>
 
-            <Card bordered={false} style={{ borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+            <Card bordered={false} style={{
+                borderRadius: 12,
+                boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
+                border: isDark ? '1px solid #303030' : '1px solid #e0e0e0',
+                background: isDark ? '#1f1f1f' : '#ffffff'
+            }}>
                 <Tabs
                     items={[
                         {

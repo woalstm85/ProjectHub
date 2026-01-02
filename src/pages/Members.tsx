@@ -412,7 +412,9 @@ const Members: React.FC = () => {
                     display: 'flex',
                     flexDirection: 'column',
                     background: colors.gridCardBg,
-                    border: isDark ? `1px solid ${colors.border}` : '1px solid #f0f0f0',
+                    borderRadius: 12,
+                    boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
+                    border: isDark ? '1px solid #303030' : '1px solid #e0e0e0',
                     transition: 'all 0.2s',
                   }}
                   hoverable

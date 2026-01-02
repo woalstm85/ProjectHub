@@ -35,12 +35,15 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useDriveStore, type DriveItem } from '../store/driveStore';
+import { useSettings } from '../store/settingsStore';
 
 const { Content } = Layout;
 const { Text } = Typography;
 
 const Drive: React.FC = () => {
     const { items, createFolder, uploadFile, deleteItem, getItemsByParentId } = useDriveStore();
+    const { effectiveTheme } = useSettings();
+    const isDark = effectiveTheme === 'dark';
 
     // State
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -227,11 +230,12 @@ const Drive: React.FC = () => {
 
                 <div
                     style={{
-                        background: '#fff',
+                        background: isDark ? '#1f1f1f' : '#ffffff',
                         padding: 24,
                         borderRadius: 12,
                         minHeight: '100%',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                        boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
+                        border: isDark ? '1px solid #303030' : '1px solid #e0e0e0'
                     }}
                 >
                     {filteredItems.length === 0 ? (
@@ -252,7 +256,13 @@ const Drive: React.FC = () => {
                                 <Card
                                     key={item.id}
                                     hoverable
-                                    style={{ width: 160, textAlign: 'center', borderRadius: 12, border: '1px solid #f0f0f0' }}
+                                    style={{
+                                        width: 160,
+                                        textAlign: 'center',
+                                        borderRadius: 12,
+                                        border: isDark ? '1px solid #303030' : '1px solid #e0e0e0',
+                                        background: isDark ? '#2a2a2a' : '#ffffff'
+                                    }}
                                     bodyStyle={{ padding: 16 }}
                                     onClick={() => handleFolderClick(item)}
                                 >

@@ -142,7 +142,7 @@ const Reports: React.FC = () => {
 
   // KPI Card Component
   const KPICard = ({ title, value, suffix, color, icon, detail, progress }: any) => (
-    <Card bordered={false} style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12, height: '100%' }}>
+    <Card bordered={false} style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', height: '100%' }}>
       <Statistic
         title={<Text type="secondary">{icon} {title}</Text>}
         value={value}
@@ -165,7 +165,7 @@ const Reports: React.FC = () => {
   // Filter Bar Component (Memoized to prevent flickering)
   const FilterBar = React.memo(({ dateRange, setDateRange, selectedProjectIds, setSelectedProjectIds, selectedMemberIds, setSelectedMemberIds, projectOptions, memberOptions }: any) => {
     return (
-      <Card size="small" style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: 12, marginBottom: 24 }}>
+      <Card size="small" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', marginBottom: 24 }}>
         <Space wrap size="middle">
           <Space>
             <FilterOutlined style={{ color: colors.textSecondary }} />
@@ -783,7 +783,7 @@ const Reports: React.FC = () => {
         </Row>
 
         {/* 주간 비교 */}
-        <Card title={<Space><RiseOutlined /> 주간 성과 비교 (이번 주 vs 지난 주)</Space>} style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+        <Card title={<Space><RiseOutlined /> 주간 성과 비교 (이번 주 vs 지난 주)</Space>} style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
           <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
             완료 속도: 평균 <Text strong>{avgCompletionTime}</Text>일 / 이슈 해결: 평균 <Text strong>{avgIssueResTime}</Text>일
           </Text>
@@ -826,13 +826,13 @@ const Reports: React.FC = () => {
         {/* 월별 추이 + 위험 프로젝트 */}
         <Row gutter={16}>
           <Col span={16}>
-            <Card title={<Space><BarChartOutlined /> 월별 추이 (최근 6개월)</Space>} style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title={<Space><BarChartOutlined /> 월별 추이 (최근 6개월)</Space>} style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={300}>
                 <ComposedChart data={monthlyTrendData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.chartGrid} />
                   <XAxis dataKey="month" tick={{ fill: colors.text }} />
                   <YAxis tick={{ fill: colors.text }} />
-                  <RechartsTooltip contentStyle={{ backgroundColor: colors.cardBg, border: `1px solid ${colors.border}` }} />
+                  <RechartsTooltip contentStyle={{ backgroundColor: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }} />
                   <Legend />
                   <Bar dataKey="생성된작업" fill={CHART_COLORS.primary} opacity={0.7} />
                   <Bar dataKey="완료된작업" fill={CHART_COLORS.success} />
@@ -845,7 +845,7 @@ const Reports: React.FC = () => {
           <Col span={8}>
             <Card
               title={<Space><WarningOutlined style={{ color: colors.danger }} /> 위험 프로젝트</Space>}
-              style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, height: '100%' }}
+              style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', height: '100%' }}
               bodyStyle={{ maxHeight: 300, overflow: 'auto' }}
             >
               {riskProjects.length === 0 ? (
@@ -947,7 +947,7 @@ const Reports: React.FC = () => {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Row gutter={16}>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">총 프로젝트</Text>}
                 value={filteredProjects.length}
@@ -956,7 +956,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">진행중</Text>}
                 value={filteredProjects.filter(p => p.status === ProjectStatus.IN_PROGRESS).length}
@@ -965,7 +965,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">완료</Text>}
                 value={filteredProjects.filter(p => p.status === ProjectStatus.COMPLETED).length}
@@ -974,7 +974,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">평균 진행률</Text>}
                 value={Math.round(filteredProjects.reduce((acc, p) => acc + p.progress, 0) / Math.max(1, filteredProjects.length))}
@@ -986,7 +986,7 @@ const Reports: React.FC = () => {
 
         <Row gutter={16}>
           <Col span={12}>
-            <Card title="프로젝트별 진행률" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="프로젝트별 진행률" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={projectTableData} layout="vertical" margin={{ left: 80 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.chartGrid} />
@@ -1003,7 +1003,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={12}>
-            <Card title="작업 상태 분포" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="작업 상태 분포" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -1027,7 +1027,7 @@ const Reports: React.FC = () => {
           </Col>
         </Row>
 
-        <Card title="프로젝트 상세 현황" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+        <Card title="프로젝트 상세 현황" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
           <Table
             columns={projectColumns}
             dataSource={projectTableData}
@@ -1082,12 +1082,12 @@ const Reports: React.FC = () => {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Row gutter={16}>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic title={<Text type="secondary">총 팀원</Text>} value={members.length} prefix={<TeamOutlined />} />
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">평균 완료율</Text>}
                 value={Math.round(memberPerformanceData.reduce((acc, m) => acc + m.completionRate, 0) / Math.max(1, members.length))}
@@ -1096,7 +1096,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">평균 생산성</Text>}
                 value={Math.round(memberPerformanceData.reduce((acc, m) => acc + m.productivity, 0) / Math.max(1, members.length))}
@@ -1105,7 +1105,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">지연 작업 보유자</Text>}
                 value={memberPerformanceData.filter(m => m.overdueTasks > 0).length}
@@ -1118,7 +1118,7 @@ const Reports: React.FC = () => {
 
         <Row gutter={16}>
           <Col span={12}>
-            <Card title="팀원별 작업량" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="팀원별 작업량" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={memberPerformanceData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.chartGrid} />
@@ -1134,7 +1134,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={12}>
-            <Card title="상위 5명 역량 비교" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="상위 5명 역량 비교" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               {memberRadarData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <RadarChart data={memberRadarData}>
@@ -1154,7 +1154,7 @@ const Reports: React.FC = () => {
           </Col>
         </Row>
 
-        <Card title="팀원 성과 상세" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+        <Card title="팀원 성과 상세" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
           <Table columns={memberColumns} dataSource={memberPerformanceData} pagination={{ pageSize: 10 }} size="middle" />
         </Card>
       </Space>
@@ -1185,12 +1185,12 @@ const Reports: React.FC = () => {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Row gutter={16}>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic title={<Text type="secondary">총 이슈</Text>} value={filteredIssues.length} prefix={<BugOutlined />} />
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">미해결 이슈</Text>}
                 value={openIssues}
@@ -1199,7 +1199,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">긴급 이슈</Text>}
                 value={criticalIssues}
@@ -1209,7 +1209,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">평균 해결 시간</Text>}
                 value={avgResTime}
@@ -1221,7 +1221,7 @@ const Reports: React.FC = () => {
 
         <Row gutter={16}>
           <Col span={8}>
-            <Card title="이슈 유형별 분포" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="이슈 유형별 분포" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
@@ -1242,7 +1242,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={8}>
-            <Card title="이슈 상태별 분포" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="이슈 상태별 분포" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
                   <Pie
@@ -1264,7 +1264,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={8}>
-            <Card title="이슈 우선순위 분포" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="이슈 우선순위 분포" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={250}>
                 <BarChart data={issuePriorityDistribution}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.chartGrid} />
@@ -1282,7 +1282,7 @@ const Reports: React.FC = () => {
           </Col>
         </Row>
 
-        <Card title="이슈 목록" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+        <Card title="이슈 목록" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
           <Table
             columns={issueColumns}
             dataSource={filteredIssues.map(i => ({ ...i, key: i.id }))}
@@ -1309,7 +1309,7 @@ const Reports: React.FC = () => {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Row gutter={16}>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">마감일 준수율</Text>}
                 value={deadlineCompliance.rate}
@@ -1319,7 +1319,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">평균 완료 기간</Text>}
                 value={avgCompletionTime}
@@ -1329,7 +1329,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">지연 작업</Text>}
                 value={overdueTasks.length}
@@ -1340,7 +1340,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">7일 내 마감</Text>}
                 value={upcomingDeadlines.length}
@@ -1355,7 +1355,7 @@ const Reports: React.FC = () => {
           <Col span={12}>
             <Card
               title={<Space><WarningOutlined style={{ color: colors.danger }} /> 지연 작업 목록</Space>}
-              style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}
+              style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}
               bodyStyle={{ maxHeight: 300, overflow: 'auto' }}
             >
               {overdueTasks.length === 0 ? (
@@ -1388,7 +1388,7 @@ const Reports: React.FC = () => {
           <Col span={12}>
             <Card
               title={<Space><CalendarOutlined /> 7일 내 마감 예정</Space>}
-              style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}
+              style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}
               bodyStyle={{ maxHeight: 300, overflow: 'auto' }}
             >
               {upcomingDeadlines.length === 0 ? (
@@ -1441,7 +1441,7 @@ const Reports: React.FC = () => {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Row gutter={16}>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">총 활동</Text>}
                 value={filteredActivities.length}
@@ -1450,7 +1450,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">오늘 활동</Text>}
                 value={activities.filter(a => dayjs(a.timestamp).isSame(dayjs(), 'day')).length}
@@ -1458,7 +1458,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">이번 주 활동</Text>}
                 value={activities.filter(a => dayjs(a.timestamp).isAfter(dayjs().startOf('isoWeek'))).length}
@@ -1466,7 +1466,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">일 평균 활동</Text>}
                 value={Math.round(filteredActivities.length / 14)}
@@ -1478,7 +1478,7 @@ const Reports: React.FC = () => {
 
         <Row gutter={16}>
           <Col span={16}>
-            <Card title="일별 활동 추이 (최근 14일)" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="일별 활동 추이 (최근 14일)" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={300}>
                 <AreaChart data={dailyActivityData}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.chartGrid} />
@@ -1494,7 +1494,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={8}>
-            <Card title="활동 유형별 분포" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card title="활동 유형별 분포" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                   <Pie
@@ -1517,7 +1517,7 @@ const Reports: React.FC = () => {
           </Col>
         </Row>
 
-        <Card title="팀원별 활동량" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+        <Card title="팀원별 활동량" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={memberActivityData.slice(0, 10)} layout="vertical" margin={{ left: 80 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={colors.chartGrid} />
@@ -1543,7 +1543,7 @@ const Reports: React.FC = () => {
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Row gutter={16}>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">총 예산</Text>}
                 value={totalBudget}
@@ -1553,7 +1553,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">총 지출</Text>}
                 value={totalSpent}
@@ -1564,7 +1564,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">잔액</Text>}
                 value={totalRemaining}
@@ -1575,7 +1575,7 @@ const Reports: React.FC = () => {
             </Card>
           </Col>
           <Col span={6}>
-            <Card style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+            <Card style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
               <Statistic
                 title={<Text type="secondary">예산 초과 프로젝트</Text>}
                 value={overBudgetProjects.length}
@@ -1586,7 +1586,7 @@ const Reports: React.FC = () => {
           </Col>
         </Row>
 
-        <Card title="프로젝트별 예산 현황" style={{ background: colors.cardBg, border: `1px solid ${colors.border}` }}>
+        <Card title="프로젝트별 예산 현황" style={{ background: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}>
           <ResponsiveContainer width="100%" height={350}>
             <ComposedChart data={budgetData} margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={colors.chartGrid} />
@@ -1594,7 +1594,7 @@ const Reports: React.FC = () => {
               <YAxis tick={{ fill: colors.text }} tickFormatter={(v) => `${(v / 1000000).toFixed(0)}M`} />
               <RechartsTooltip
                 formatter={(value: any) => `${(value || 0).toLocaleString()}원`}
-                contentStyle={{ backgroundColor: colors.cardBg, border: `1px solid ${colors.border}` }}
+                contentStyle={{ backgroundColor: colors.cardBg, border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)' }}
               />
               <Legend />
               <Bar dataKey="budget" name="예산" fill={CHART_COLORS.primary} opacity={0.3} />

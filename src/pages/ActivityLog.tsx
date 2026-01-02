@@ -79,14 +79,15 @@ const ActivityLog: React.FC = () => {
   const isDark = effectiveTheme === 'dark';
 
   const colors = {
-    cardBg: isDark ? '#141414' : '#ffffff',
-    itemBg: isDark ? '#1f1f1f' : '#fafafa',
-    itemHoverBg: isDark ? '#262626' : '#f0f0f0',
+    cardBg: isDark ? '#1f1f1f' : '#ffffff',
+    itemBg: isDark ? '#262626' : '#fafafa',
+    itemHoverBg: isDark ? '#303030' : '#f0f0f0',
     text: isDark ? '#ffffff' : '#262626',
     textSecondary: isDark ? '#8c8c8c' : '#8c8c8c',
     textTertiary: isDark ? '#595959' : '#bfbfbf',
-    border: isDark ? '#303030' : '#f0f0f0',
-    divider: isDark ? '#262626' : '#f5f5f5',
+    border: isDark ? '#303030' : '#e0e0e0',
+    divider: isDark ? '#303030' : '#f5f5f5',
+    shadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
   };
 
   // 필터링된 활동 목록
@@ -200,9 +201,10 @@ const ActivityLog: React.FC = () => {
           gap: 24,
           marginTop: 20,
           padding: '16px 20px',
-          background: colors.itemBg,
+          background: colors.cardBg,
           borderRadius: 12,
           border: `1px solid ${colors.border}`,
+          boxShadow: colors.shadow,
         }}>
           <div>
             <Text style={{ color: colors.textSecondary, fontSize: 12 }}>전체</Text>
@@ -243,6 +245,7 @@ const ActivityLog: React.FC = () => {
         padding: 16,
         borderRadius: 12,
         border: `1px solid ${colors.border}`,
+        boxShadow: colors.shadow,
       }}>
         <Space wrap size="middle">
           <Input
@@ -291,9 +294,7 @@ const ActivityLog: React.FC = () => {
       <div style={{
         flex: 1,
         overflow: 'auto',
-        background: colors.cardBg,
         borderRadius: 12,
-        border: `1px solid ${colors.border}`,
       }}>
         {filteredActivities.length === 0 ? (
           <div style={{ padding: 60 }}>

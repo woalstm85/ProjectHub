@@ -54,11 +54,12 @@ const Tasks: React.FC = () => {
   const colors = {
     columnBg: isDark ? '#1f1f1f' : '#f9f9f9',
     columnHeaderBg: isDark ? '#262626' : '#f0f0f0',
-    cardBg: isDark ? '#2a2a2a' : '#ffffff',
+    cardBg: isDark ? '#1f1f1f' : '#ffffff',
     cardHoverBg: isDark ? '#333333' : '#ffffff',
     text: isDark ? '#ffffff' : '#262626',
     textSecondary: isDark ? '#a0a0a0' : '#666666',
-    border: isDark ? '#404040' : '#f0f0f0',
+    border: isDark ? '#303030' : '#e0e0e0',
+    shadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
     bannerBg: isDark ? '#262626' : '#f0f2f5',
     addBtnBorder: isDark ? '#404040' : '#d9d9d9',
     addBtnText: isDark ? '#a0a0a0' : '#666666',
@@ -338,7 +339,7 @@ const Tasks: React.FC = () => {
         <div style={{ marginBottom: 24 }}>
           <Title level={2} style={{ margin: 0 }}>작업관리</Title>
         </div>
-        <Card style={{ textAlign: 'center', padding: 40, background: colors.cardBg }}>
+        <Card style={{ textAlign: 'center', padding: 40, background: colors.cardBg, borderRadius: 12, border: `1px solid ${colors.border}`, boxShadow: colors.shadow }}>
           <p style={{ fontSize: 16, color: colors.textSecondary }}>프로젝트가 없습니다. 먼저 프로젝트를 생성해주세요.</p>
         </Card>
       </div>
@@ -375,7 +376,8 @@ const Tasks: React.FC = () => {
           background: colors.cardBg,
           padding: 16,
           borderRadius: 12,
-          border: `1px solid ${colors.border}`
+          border: `1px solid ${colors.border}`,
+          boxShadow: colors.shadow
         }}>
           <Space wrap>
             <Input

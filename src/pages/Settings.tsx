@@ -53,8 +53,9 @@ const Settings: React.FC = () => {
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
   const { members, updateMember } = useMemberStore();
-  const { settings, updateSettings, saveSettings, resetSettings, hasChanges } = useSettings();
+  const { settings, updateSettings, saveSettings, resetSettings, hasChanges, effectiveTheme } = useSettings();
   const { user, setUser } = useAuthStore();
+  const isDark = effectiveTheme === 'dark';
 
   const [resetModalOpen, setResetModalOpen] = useState(false);
   const [profileModalOpen, setProfileModalOpen] = useState(false);
@@ -219,7 +220,7 @@ const Settings: React.FC = () => {
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 16 }}
+            style={{ borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', background: isDark ? '#1f1f1f' : '#ffffff' }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
               <div style={{
@@ -260,7 +261,7 @@ const Settings: React.FC = () => {
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 16, height: '100%' }}
+            style={{ borderRadius: 12, height: '100%', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', background: isDark ? '#1f1f1f' : '#ffffff' }}
             extra={<Button type="text" size="small" onClick={() => updateSettings('theme', settings.theme === 'dark' ? 'light' : 'dark')}>{settings.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}</Button>}
           >
             {/* 테마 모드 */}
@@ -352,7 +353,7 @@ const Settings: React.FC = () => {
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 16, height: '100%' }}
+            style={{ borderRadius: 12, height: '100%', boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', background: isDark ? '#1f1f1f' : '#ffffff' }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, padding: '16px', background: settings.theme === 'dark' ? '#1f1f1f' : '#fffbe6', borderRadius: 8, border: `1px solid ${settings.theme === 'dark' ? '#303030' : '#ffe58f'}` }}>
               <div>
@@ -403,7 +404,7 @@ const Settings: React.FC = () => {
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 16 }}
+            style={{ height: '100%', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', background: isDark ? '#1f1f1f' : '#ffffff' }}
           >
             <div style={{ marginBottom: 24 }}>
               <Text strong style={{ display: 'block', marginBottom: 8 }}>언어 (Language)</Text>
@@ -452,7 +453,7 @@ const Settings: React.FC = () => {
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 16 }}
+            style={{ height: '100%', borderRadius: 12, boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)', border: isDark ? '1px solid #303030' : '1px solid #e0e0e0', background: isDark ? '#1f1f1f' : '#ffffff' }}
           >
             <Space direction="vertical" style={{ width: '100%' }} size={16}>
               <div style={{ background: settings.theme === 'dark' ? '#1f1f1f' : '#f9f9f9', padding: 16, borderRadius: 8 }}>
@@ -464,25 +465,35 @@ const Settings: React.FC = () => {
                 </div>
               </div>
 
-              <Button icon={<CloudDownloadOutlined />} onClick={exportData} block size="large">
-                데이터 백업 (JSON)
-              </Button>
+              <Row gutter={[12, 12]}>
+                <Col span={12}>
+                  <Button type="primary" icon={<CloudDownloadOutlined />} onClick={exportData} block size="large">
+                    백업
+                  </Button>
+                </Col>
+                <Col span={12}>
+                  <Upload accept=".json" showUploadList={false} beforeUpload={importData} style={{ width: '100%', display: 'block' }}>
+                    <Button icon={<CloudUploadOutlined />} block size="large">
+                      복원
+                    </Button>
+                  </Upload>
+                </Col>
+              </Row>
 
-              <Upload accept=".json" showUploadList={false} beforeUpload={importData}>
-                <Button icon={<CloudUploadOutlined />} block size="large">
-                  데이터 복원
-                </Button>
-              </Upload>
+              <Divider style={{ margin: '4px 0' }} />
 
-              <Divider style={{ margin: '8px 0' }} />
-
-              <Button danger icon={<ReloadOutlined />} onClick={() => setResetModalOpen(true)} block>
-                설정 초기화
-              </Button>
-
-              <Button danger type="dashed" icon={<DeleteOutlined />} onClick={clearAllData} block>
-                모든 데이터 삭제
-              </Button>
+              <Row gutter={[12, 12]}>
+                <Col span={12}>
+                  <Button danger icon={<ReloadOutlined />} onClick={() => setResetModalOpen(true)} block size="large">
+                    초기화
+                  </Button>
+                </Col>
+                <Col span={12}>
+                  <Button type="primary" danger icon={<DeleteOutlined />} onClick={clearAllData} block size="large">
+                    삭제
+                  </Button>
+                </Col>
+              </Row>
             </Space>
           </Card>
         </Col>

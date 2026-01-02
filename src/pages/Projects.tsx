@@ -358,7 +358,14 @@ const Projects: React.FC = () => {
             <Col xs={24} sm={12} lg={8} xl={6} key={project.id}>
               <Card
                 hoverable
-                style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                style={{
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  borderRadius: 12,
+                  boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
+                  border: isDark ? '1px solid #303030' : '1px solid #e0e0e0',
+                }}
                 bodyStyle={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 20 }}
                 actions={[
                   <Tooltip title="수정">

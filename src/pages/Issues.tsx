@@ -115,9 +115,10 @@ const Issues: React.FC = () => {
     cardBg: isDark ? '#1f1f1f' : '#ffffff',
     text: isDark ? '#ffffff' : '#262626',
     textSecondary: isDark ? '#a0a0a0' : '#8c8c8c',
-    border: isDark ? '#303030' : '#f0f0f0',
+    border: isDark ? '#303030' : '#e0e0e0',
     columnBg: isDark ? '#141414' : '#f5f5f5',
     primary: isDark ? '#177ddc' : '#1890ff',
+    shadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
   };
 
   const filteredIssues = useMemo(() => {
@@ -312,7 +313,7 @@ const Issues: React.FC = () => {
                         border: `1px solid ${colors.border}`,
                         borderLeft: `4px solid ${getIssueTypeColor(issue.type)}`,
                         borderRadius: 12,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+                        boxShadow: colors.shadow
                       }}
                       styles={{ body: { padding: 12 } }}>
                       <div style={{ marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
@@ -382,7 +383,7 @@ const Issues: React.FC = () => {
           { title: '긴급', value: stats.critical, icon: <FireOutlined />, color: '#cf1322' },
         ].map((s, i) => (
           <Col span={6} key={i}>
-            <Card style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+            <Card style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12, boxShadow: colors.shadow }}>
               <Statistic title={s.title} value={s.value} prefix={s.icon} valueStyle={{ color: s.color, fontWeight: 700 }} />
             </Card>
           </Col>
@@ -393,7 +394,7 @@ const Issues: React.FC = () => {
       {showAnalytics && (
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col span={16}>
-            <Card title="이슈 트렌드" size="small" style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+            <Card title="이슈 트렌드" size="small" style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12, boxShadow: colors.shadow }}>
               <div style={{ height: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={trendData}>
@@ -409,7 +410,7 @@ const Issues: React.FC = () => {
             </Card>
           </Col>
           <Col span={8}>
-            <Card title="유형 분포" size="small" style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+            <Card title="유형 분포" size="small" style={{ background: colors.cardBg, borderColor: colors.border, borderRadius: 12, boxShadow: colors.shadow }}>
               <div style={{ height: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
@@ -425,7 +426,7 @@ const Issues: React.FC = () => {
         </Row>
       )}
 
-      <Card style={{ marginBottom: 16, background: colors.cardBg, borderColor: colors.border, borderRadius: 12 }}>
+      <Card style={{ marginBottom: 16, background: colors.cardBg, borderColor: colors.border, borderRadius: 12, boxShadow: colors.shadow }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Space size="small" wrap>
             <Input
@@ -491,7 +492,7 @@ const Issues: React.FC = () => {
       {/* Main Content Area: Board or List View */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {viewMode === 'LIST' ? (
-          <div style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: 12 }}>
+          <div style={{ background: colors.cardBg, borderRadius: 12 }}>
             <Table
               rowSelection={{ selectedRowKeys, onChange: k => setSelectedRowKeys(k) }}
               columns={columns}

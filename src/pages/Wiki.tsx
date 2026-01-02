@@ -32,6 +32,7 @@ import {
 import dayjs from 'dayjs';
 import { useWikiStore, type WikiCategory } from '../store/wikiStore';
 import { useAuthStore } from '../store/authStore';
+import { useSettings } from '../store/settingsStore';
 
 const { Title, Text, Paragraph } = Typography;
 const { Sider, Content } = Layout;
@@ -40,6 +41,8 @@ const { TextArea } = Input;
 const Wiki: React.FC = () => {
     const { pages, addPage, updatePage, deletePage } = useWikiStore();
     const { user } = useAuthStore();
+    const { effectiveTheme } = useSettings();
+    const isDark = effectiveTheme === 'dark';
 
     // States
     const [selectedPageId, setSelectedPageId] = useState<string | null>(null);
@@ -156,7 +159,7 @@ const Wiki: React.FC = () => {
 
     return (
         <Layout style={{ height: 'calc(100vh - 120px)', background: 'transparent' }}>
-            <Sider width={320} style={{ background: 'transparent', borderRight: '1px solid #f0f0f0', paddingRight: 24 }}>
+            <Sider width={320} style={{ background: 'transparent', borderRight: isDark ? '1px solid #303030' : '1px solid #f0f0f0', paddingRight: 24 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
                     <div style={{ marginBottom: 16 }}>
                         <Button type="primary" block icon={<PlusOutlined />} size="large" onClick={handleCreateClick}>
@@ -224,7 +227,13 @@ const Wiki: React.FC = () => {
             </Sider>
 
             <Content style={{ paddingLeft: 24, overflowY: 'auto' }}>
-                <Card style={{ minHeight: '100%', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                <Card style={{
+                    minHeight: '100%',
+                    borderRadius: 12,
+                    boxShadow: isDark ? '0 2px 8px rgba(0,0,0,0.3)' : '0 4px 16px rgba(0,0,0,0.06)',
+                    border: isDark ? '1px solid #303030' : '1px solid #e0e0e0',
+                    background: isDark ? '#1f1f1f' : '#ffffff'
+                }}>
                     {isCreating || isEditing ? (
                         <Form form={form} layout="vertical" onFinish={handleSave} initialValues={{ category: 'GENERAL' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
