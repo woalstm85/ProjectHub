@@ -18,6 +18,9 @@ import {
   Tag,
   Upload,
   Tooltip,
+  Input,
+  Descriptions,
+  Form
 } from 'antd';
 import {
   BgColorsOutlined,
@@ -36,11 +39,15 @@ import {
   SaveOutlined,
   CloudDownloadOutlined,
   CloudUploadOutlined,
+  SafetyCertificateOutlined,
+  UserOutlined,
+  MailOutlined
 } from '@ant-design/icons';
 import { useProjectStore } from '../store/projectStore';
 import { useTaskStore } from '../store/taskStore';
 import { useMemberStore } from '../store/memberStore';
 import { useSettings } from '../store/settingsStore';
+import { useAuthStore } from '../store/authStore';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -48,10 +55,34 @@ const { Title, Text } = Typography;
 const Settings: React.FC = () => {
   const { projects } = useProjectStore();
   const { tasks } = useTaskStore();
-  const { members } = useMemberStore();
+  const { members, updateMember } = useMemberStore();
   const { settings, updateSettings, saveSettings, resetSettings, hasChanges } = useSettings();
+  const { user, setUser } = useAuthStore();
 
   const [resetModalOpen, setResetModalOpen] = useState(false);
+  const [profileModalOpen, setProfileModalOpen] = useState(false);
+  const [form] = Form.useForm();
+
+  // 프로필 업데이트 핸들러
+  const handleUpdateProfile = (values: any) => {
+    if (!user) return;
+
+    // 1. Auth Store 업데이트
+    const updatedUser = { ...user, ...values };
+    setUser(updatedUser);
+
+    // 2. Member Store 업데이트 (연동된 경우)
+    if (user.memberId) {
+      updateMember(user.memberId, {
+        name: values.name,
+        email: values.email,
+        // 필요한 경우 다른 필드 추가
+      });
+    }
+
+    message.success('프로필이 업데이트되었습니다.');
+    setProfileModalOpen(false);
+  };
 
   // 설정 저장 핸들러
   const handleSave = () => {
@@ -90,7 +121,7 @@ const Settings: React.FC = () => {
     message.success('데이터가 내보내기되었습니다.');
   };
 
-  // 데이터 가져오기
+  // 데이터 가져오기 (Mock implementation mostly, assumes format matches)
   const importData = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -150,22 +181,13 @@ const Settings: React.FC = () => {
     { label: '레드', value: '#f5222d' },
     { label: '핑크', value: '#eb2f96' },
     { label: '시안', value: '#13c2c2' },
-  ];
-
-  // 단축키 목록
-  const shortcuts = [
-    { key: 'Ctrl + N', description: '새 작업 추가' },
-    { key: 'Ctrl + P', description: '새 프로젝트 추가' },
-    { key: 'Ctrl + S', description: '저장' },
-    { key: 'Ctrl + F', description: '검색' },
-    { key: 'Ctrl + /', description: '단축키 도움말' },
-    { key: 'Esc', description: '모달 닫기' },
+    { label: '그레이', value: '#595959' }, // New option
   ];
 
   return (
-    <div>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* 헤더 */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <Title level={2} style={{ margin: 0 }}>설정</Title>
           <Text type="secondary">앱 환경설정 및 데이터 관리</Text>
@@ -181,6 +203,7 @@ const Settings: React.FC = () => {
             icon={<SaveOutlined />}
             onClick={handleSave}
             disabled={!hasChanges}
+            size="large"
           >
             설정 저장
           </Button>
@@ -188,18 +211,62 @@ const Settings: React.FC = () => {
       </div>
 
       <Row gutter={[24, 24]}>
-        {/* 테마 설정 */}
+
+        {/* 계정 정보 (New) */}
+        <Col span={24}>
+          <Card
+            title={
+              <Space>
+                <SafetyCertificateOutlined style={{ color: '#1890ff' }} />
+                계정 정보
+              </Space>
+            }
+            bordered={false}
+            style={{ borderRadius: 16 }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+              <div style={{
+                width: 80, height: 80, borderRadius: '50%',
+                background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 32
+              }}>
+                {user?.avatar ? <img src={user.avatar} alt="avatar" style={{ width: '100%', height: '100%', borderRadius: '50%' }} /> : <UserOutlined style={{ color: '#bfbfbf' }} />}
+              </div>
+              <div style={{ flex: 1 }}>
+                <Descriptions title={null} column={{ xxl: 2, xl: 2, lg: 2, md: 1, sm: 1, xs: 1 }}>
+                  <Descriptions.Item label="이름">{user?.name}</Descriptions.Item>
+                  <Descriptions.Item label="이메일">{user?.email}</Descriptions.Item>
+                  <Descriptions.Item label="직책">{user?.role === 'admin' ? '관리자' : '일반 멤버'}</Descriptions.Item>
+                  <Descriptions.Item label="가입일">{dayjs(user?.createdAt).format('YYYY-MM-DD')}</Descriptions.Item>
+                </Descriptions>
+              </div>
+              <div>
+                <Button onClick={() => {
+                  form.setFieldsValue({
+                    name: user?.name,
+                    email: user?.email,
+                  });
+                  setProfileModalOpen(true);
+                }}>프로필 편집</Button>
+              </div>
+            </div>
+          </Card>
+        </Col>
+
+        {/* 1. 화면 설정 (Appearance) */}
         <Col xs={24} lg={12}>
           <Card
             title={
               <Space>
                 <BgColorsOutlined style={{ color: settings.primaryColor }} />
-                테마 설정
+                화면 설정
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 12, height: '100%' }}
+            style={{ borderRadius: 16, height: '100%' }}
+            extra={<Button type="text" size="small" onClick={() => updateSettings('theme', settings.theme === 'dark' ? 'light' : 'dark')}>{settings.theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}</Button>}
           >
+            {/* 테마 모드 */}
             <div style={{ marginBottom: 24 }}>
               <Text strong style={{ display: 'block', marginBottom: 12 }}>테마 모드</Text>
               <Radio.Group
@@ -207,41 +274,50 @@ const Settings: React.FC = () => {
                 onChange={(e) => updateSettings('theme', e.target.value)}
                 optionType="button"
                 buttonStyle="solid"
+                style={{ width: '100%' }}
               >
-                <Radio.Button value="light">
+                <Radio.Button value="light" style={{ width: '33%', textAlign: 'center' }}>
                   <SunOutlined /> 라이트
                 </Radio.Button>
-                <Radio.Button value="dark">
+                <Radio.Button value="dark" style={{ width: '33%', textAlign: 'center' }}>
                   <MoonOutlined /> 다크
                 </Radio.Button>
-                <Radio.Button value="system">
+                <Radio.Button value="system" style={{ width: '34%', textAlign: 'center' }}>
                   <DesktopOutlined /> 시스템
                 </Radio.Button>
               </Radio.Group>
             </div>
 
+            <Divider />
+
+            {/* 브랜드 컬러 */}
             <div style={{ marginBottom: 24 }}>
-              <Text strong style={{ display: 'block', marginBottom: 12 }}>테마 색상</Text>
-              <Space wrap>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Text strong>브랜드 컬러</Text>
+                <Text type="secondary">{settings.primaryColor}</Text>
+              </div>
+              <Space wrap size={[12, 12]}>
                 {colorOptions.map(color => (
                   <Tooltip title={color.label} key={color.value}>
                     <div
                       onClick={() => updateSettings('primaryColor', color.value)}
                       style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
                         background: color.value,
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         border: settings.primaryColor === color.value ? '3px solid #1a1a1a' : '3px solid transparent',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                         transition: 'all 0.2s',
+                        transform: settings.primaryColor === color.value ? 'scale(1.1)' : 'scale(1)',
                       }}
                     >
                       {settings.primaryColor === color.value && (
-                        <CheckCircleOutlined style={{ color: 'white', fontSize: 16 }} />
+                        <CheckCircleOutlined style={{ color: 'white', fontSize: 18, filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.2))' }} />
                       )}
                     </div>
                   </Tooltip>
@@ -249,7 +325,10 @@ const Settings: React.FC = () => {
               </Space>
             </div>
 
-            <div style={{ marginBottom: 24 }}>
+            <Divider />
+
+            {/* 폰트 크기 */}
+            <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <Text strong>글꼴 크기</Text>
                 <Text type="secondary">{settings.fontSize}px</Text>
@@ -260,25 +339,13 @@ const Settings: React.FC = () => {
                 value={settings.fontSize}
                 onChange={(value) => updateSettings('fontSize', value)}
                 marks={{ 12: '작게', 14: '보통', 16: '크게', 18: '아주 크게' }}
+                tooltip={{ formatter: (val) => `${val}px` }}
               />
-            </div>
-
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <Text strong>컴팩트 모드</Text>
-                  <div><Text type="secondary" style={{ fontSize: 12 }}>UI 요소 간격을 줄여 더 많은 정보 표시</Text></div>
-                </div>
-                <Switch
-                  checked={settings.compactMode}
-                  onChange={(checked) => updateSettings('compactMode', checked)}
-                />
-              </div>
             </div>
           </Card>
         </Col>
 
-        {/* 알림 설정 */}
+        {/* 2. 알림 설정 (Notifications) */}
         <Col xs={24} lg={12}>
           <Card
             title={
@@ -288,148 +355,97 @@ const Settings: React.FC = () => {
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 12, height: '100%' }}
+            style={{ borderRadius: 16, height: '100%' }}
           >
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <Text strong>알림 활성화</Text>
-                  <div><Text type="secondary" style={{ fontSize: 12 }}>모든 알림을 켜거나 끕니다</Text></div>
-                </div>
-                <Switch
-                  checked={settings.notifications.enabled}
-                  onChange={(checked) => updateSettings('notifications.enabled', checked)}
-                />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, padding: '16px', background: settings.theme === 'dark' ? '#1f1f1f' : '#fffbe6', borderRadius: 8, border: `1px solid ${settings.theme === 'dark' ? '#303030' : '#ffe58f'}` }}>
+              <div>
+                <Text strong>전체 알림</Text>
+                <div><Text type="secondary" style={{ fontSize: 12 }}>앱의 모든 알림을 제어합니다</Text></div>
               </div>
+              <Switch
+                checked={settings.notifications.enabled}
+                onChange={(checked) => updateSettings('notifications.enabled', checked)}
+              />
             </div>
 
-            <Divider style={{ margin: '16px 0' }} />
-
             <div style={{ opacity: settings.notifications.enabled ? 1 : 0.5, pointerEvents: settings.notifications.enabled ? 'auto' : 'none' }}>
-              <Text strong style={{ display: 'block', marginBottom: 12 }}>알림 유형</Text>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text>마감일 알림</Text>
-                  <Space>
-                    <Select
-                      size="small"
-                      value={settings.notifications.deadlineDays}
-                      onChange={(value) => updateSettings('notifications.deadlineDays', value)}
-                      style={{ width: 80 }}
-                      options={[
-                        { label: '1일 전', value: 1 },
-                        { label: '3일 전', value: 3 },
-                        { label: '7일 전', value: 7 },
-                      ]}
-                    />
+              <List
+                itemLayout="horizontal"
+                dataSource={[
+                  { title: '작업 할당', desc: '새로운 작업이 나에게 할당될 때', key: 'taskAssigned' },
+                  { title: '작업 완료', desc: '내가 팔로우한 작업이 완료될 때', key: 'taskCompleted' },
+                  { title: '프로젝트 업데이트', desc: '참여 중인 프로젝트의 주요 변경사항', key: 'projectUpdates' },
+                  { title: '마감일 임박', desc: '마감일이 다가오는 작업 알림', key: 'deadlineReminder' },
+                  { title: '알림 소리', desc: '알림 수신 시 효과음 재생', key: 'sound' },
+                ]}
+                renderItem={item => (
+                  <List.Item actions={[
                     <Switch
-                      size="small"
-                      checked={settings.notifications.deadlineReminder}
-                      onChange={(checked) => updateSettings('notifications.deadlineReminder', checked)}
+                      checked={settings.notifications[item.key as keyof typeof settings.notifications] as boolean}
+                      onChange={(checked) => updateSettings(`notifications.${item.key}`, checked)}
                     />
-                  </Space>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text>작업 할당 알림</Text>
-                  <Switch
-                    size="small"
-                    checked={settings.notifications.taskAssigned}
-                    onChange={(checked) => updateSettings('notifications.taskAssigned', checked)}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text>작업 완료 알림</Text>
-                  <Switch
-                    size="small"
-                    checked={settings.notifications.taskCompleted}
-                    onChange={(checked) => updateSettings('notifications.taskCompleted', checked)}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text>프로젝트 업데이트</Text>
-                  <Switch
-                    size="small"
-                    checked={settings.notifications.projectUpdates}
-                    onChange={(checked) => updateSettings('notifications.projectUpdates', checked)}
-                  />
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Text>알림 소리</Text>
-                  <Switch
-                    size="small"
-                    checked={settings.notifications.sound}
-                    onChange={(checked) => updateSettings('notifications.sound', checked)}
-                  />
-                </div>
-              </div>
+                  ]}>
+                    <List.Item.Meta
+                      title={item.title}
+                      description={item.desc}
+                    />
+                  </List.Item>
+                )}
+              />
             </div>
           </Card>
         </Col>
 
-        {/* 언어 및 지역 설정 */}
+        {/* 3. 시스템 및 언어 (System) */}
         <Col xs={24} lg={12}>
           <Card
             title={
               <Space>
                 <GlobalOutlined style={{ color: '#13c2c2' }} />
-                언어 및 지역
+                시스템 및 언어
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 12 }}
+            style={{ borderRadius: 16 }}
           >
-            <div style={{ marginBottom: 20 }}>
-              <Text strong style={{ display: 'block', marginBottom: 8 }}>언어</Text>
+            <div style={{ marginBottom: 24 }}>
+              <Text strong style={{ display: 'block', marginBottom: 8 }}>언어 (Language)</Text>
               <Select
                 value={settings.language}
                 onChange={(value) => updateSettings('language', value)}
                 style={{ width: '100%' }}
+                size="large"
                 options={[
                   { label: '🇰🇷 한국어', value: 'ko' },
                   { label: '🇺🇸 English', value: 'en' },
-                  { label: '🇯🇵 日本語', value: 'ja' },
-                  { label: '🇨🇳 中文', value: 'zh' },
+                  { label: '🇯🇵 日本語 (준비중)', value: 'ja', disabled: true },
                 ]}
               />
-              <div style={{ marginTop: 4 }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>* 언어 변경은 추후 업데이트 예정입니다.</Text>
+            </div>
+
+            <Divider />
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <Text strong>이메일 알림</Text>
+                <div><Text type="secondary" style={{ fontSize: 12 }}>중요한 업데이트를 이메일로 수신</Text></div>
               </div>
+              <Switch defaultChecked />
             </div>
-
-            <div style={{ marginBottom: 20 }}>
-              <Text strong style={{ display: 'block', marginBottom: 8 }}>날짜 형식</Text>
-              <Select
-                value={settings.dateFormat}
-                onChange={(value) => updateSettings('dateFormat', value)}
-                style={{ width: '100%' }}
-                options={[
-                  { label: `YYYY-MM-DD (${dayjs().format('YYYY-MM-DD')})`, value: 'YYYY-MM-DD' },
-                  { label: `YYYY.MM.DD (${dayjs().format('YYYY.MM.DD')})`, value: 'YYYY.MM.DD' },
-                  { label: `MM/DD/YYYY (${dayjs().format('MM/DD/YYYY')})`, value: 'MM/DD/YYYY' },
-                  { label: `DD/MM/YYYY (${dayjs().format('DD/MM/YYYY')})`, value: 'DD/MM/YYYY' },
-                ]}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <Text strong>자동 저장</Text>
+                <div><Text type="secondary" style={{ fontSize: 12 }}>작업 내용을 실시간으로 저장</Text></div>
+              </div>
+              <Switch
+                checked={settings.autoSave}
+                onChange={(checked) => updateSettings('autoSave', checked)}
               />
-            </div>
-
-            <div>
-              <Text strong style={{ display: 'block', marginBottom: 8 }}>시간 형식</Text>
-              <Radio.Group
-                value={settings.timeFormat}
-                onChange={(e) => updateSettings('timeFormat', e.target.value)}
-              >
-                <Radio value="24h">24시간 (14:30)</Radio>
-                <Radio value="12h">12시간 (2:30 PM)</Radio>
-              </Radio.Group>
             </div>
           </Card>
         </Col>
 
-        {/* 데이터 관리 */}
+        {/* 4. 데이터 관리 (Data) */}
         <Col xs={24} lg={12}>
           <Card
             title={
@@ -439,177 +455,52 @@ const Settings: React.FC = () => {
               </Space>
             }
             bordered={false}
-            style={{ borderRadius: 12 }}
+            style={{ borderRadius: 16 }}
           >
-            <Alert
-              message="현재 데이터 현황"
-              description={
-                <Space split={<Divider type="vertical" />}>
-                  <span>프로젝트 <strong>{projects.length}</strong>개</span>
-                  <span>작업 <strong>{tasks.length}</strong>개</span>
-                  <span>팀원 <strong>{members.length}</strong>명</span>
-                </Space>
-              }
-              type="info"
-              showIcon
-              style={{ marginBottom: 20 }}
-            />
+            <Space direction="vertical" style={{ width: '100%' }} size={16}>
+              <div style={{ background: settings.theme === 'dark' ? '#1f1f1f' : '#f9f9f9', padding: 16, borderRadius: 8 }}>
+                <Text strong>로컬 데이터 현황</Text>
+                <div style={{ marginTop: 8, display: 'flex', gap: 16 }}>
+                  <Tag>{projects.length} 프로젝트</Tag>
+                  <Tag>{tasks.length} 작업</Tag>
+                  <Tag>{members.length} 멤버</Tag>
+                </div>
+              </div>
 
-            <Space direction="vertical" style={{ width: '100%' }} size={12}>
-              <Button
-                icon={<CloudDownloadOutlined />}
-                onClick={exportData}
-                block
-                style={{ textAlign: 'left', height: 48 }}
-              >
-                <span style={{ marginLeft: 8 }}>
-                  <div>데이터 내보내기</div>
-                  <div style={{ fontSize: 11, color: '#8c8c8c' }}>JSON 파일로 백업</div>
-                </span>
+              <Button icon={<CloudDownloadOutlined />} onClick={exportData} block size="large">
+                데이터 백업 (JSON)
               </Button>
 
-              <Upload
-                accept=".json"
-                showUploadList={false}
-                beforeUpload={importData}
-              >
-                <Button
-                  icon={<CloudUploadOutlined />}
-                  block
-                  style={{ textAlign: 'left', height: 48, width: '100%' }}
-                >
-                  <span style={{ marginLeft: 8 }}>
-                    <div>데이터 가져오기</div>
-                    <div style={{ fontSize: 11, color: '#8c8c8c' }}>백업 파일에서 복원</div>
-                  </span>
+              <Upload accept=".json" showUploadList={false} beforeUpload={importData}>
+                <Button icon={<CloudUploadOutlined />} block size="large">
+                  데이터 복원
                 </Button>
               </Upload>
 
-              <Button
-                icon={<DeleteOutlined />}
-                danger
-                onClick={clearAllData}
-                block
-                style={{ textAlign: 'left', height: 48 }}
-              >
-                <span style={{ marginLeft: 8 }}>
-                  <div>모든 데이터 삭제</div>
-                  <div style={{ fontSize: 11, color: '#ff7875' }}>되돌릴 수 없습니다</div>
-                </span>
+              <Divider style={{ margin: '8px 0' }} />
+
+              <Button danger icon={<ReloadOutlined />} onClick={() => setResetModalOpen(true)} block>
+                설정 초기화
+              </Button>
+
+              <Button danger type="dashed" icon={<DeleteOutlined />} onClick={clearAllData} block>
+                모든 데이터 삭제
               </Button>
             </Space>
           </Card>
         </Col>
 
-        {/* 단축키 안내 */}
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <Space>
-                <KeyOutlined style={{ color: '#722ed1' }} />
-                단축키 안내
-              </Space>
-            }
-            bordered={false}
-            style={{ borderRadius: 12 }}
-          >
-            <List
-              size="small"
-              dataSource={shortcuts}
-              renderItem={(item) => (
-                <List.Item style={{ padding: '8px 0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <Text type="secondary">{item.description}</Text>
-                    <Tag style={{ fontFamily: 'monospace' }}>{item.key}</Tag>
-                  </div>
-                </List.Item>
-              )}
-            />
-            <div style={{ marginTop: 12 }}>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                * 단축키 기능은 추후 업데이트 예정입니다.
-              </Text>
-            </div>
-          </Card>
-        </Col>
-
-        {/* 기타 설정 */}
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <Space>
-                <InfoCircleOutlined style={{ color: '#8c8c8c' }} />
-                기타 설정
-              </Space>
-            }
-            bordered={false}
-            style={{ borderRadius: 12 }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <Text strong>자동 저장</Text>
-                  <div><Text type="secondary" style={{ fontSize: 12 }}>변경사항을 자동으로 저장합니다</Text></div>
-                </div>
-                <Switch
-                  checked={settings.autoSave}
-                  onChange={(checked) => updateSettings('autoSave', checked)}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <Text strong>도움말 팁 표시</Text>
-                  <div><Text type="secondary" style={{ fontSize: 12 }}>유용한 팁과 안내를 표시합니다</Text></div>
-                </div>
-                <Switch
-                  checked={settings.showTips}
-                  onChange={(checked) => updateSettings('showTips', checked)}
-                />
-              </div>
-
-              <Divider style={{ margin: '8px 0' }} />
-
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => setResetModalOpen(true)}
-              >
-                설정 초기화
-              </Button>
-            </div>
-          </Card>
-        </Col>
-
-        {/* 앱 정보 */}
+        {/* 푸터 정보 */}
         <Col span={24}>
-          <Card bordered={false} style={{ borderRadius: 12 }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                width: 48,
-                height: 48,
-                borderRadius: 12,
-                background: `linear-gradient(135deg, ${settings.primaryColor} 0%, #764ba2 100%)`,
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: 12,
-              }}>
-                <span style={{ color: 'white', fontSize: 20, fontWeight: 700 }}>P</span>
-              </div>
-              <div>
-                <Text strong style={{ fontSize: 16 }}>ProjectHub</Text>
-              </div>
-              <div>
-                <Text type="secondary">버전 1.0.0</Text>
-              </div>
-              <div style={{ marginTop: 8 }}>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  © 2024 ProjectHub. All rights reserved.
-                </Text>
-              </div>
-            </div>
-          </Card>
+          <div style={{ textAlign: 'center', padding: '24px 0', color: '#8c8c8c' }}>
+            <Space direction="vertical" size={4}>
+              <Title level={5} style={{ margin: 0, color: '#bfbfbf' }}>ProjectHub Enterprise</Title>
+              <Text type="secondary" style={{ fontSize: 12 }}>Version 2.5.0 (Build 20240501)</Text>
+              <Text type="secondary" style={{ fontSize: 12 }}>© 2024 ProjectHub Inc. All rights reserved.</Text>
+            </Space>
+          </div>
         </Col>
+
       </Row>
 
       {/* 설정 초기화 모달 */}
@@ -622,11 +513,47 @@ const Settings: React.FC = () => {
         cancelText="취소"
         okButtonProps={{ danger: true }}
       >
-        <p>모든 설정을 기본값으로 초기화하시겠습니까?</p>
-        <p style={{ color: '#8c8c8c', fontSize: 13 }}>
-          테마, 알림, 언어 등 모든 설정이 초기화됩니다.
-          (프로젝트, 작업, 팀원 데이터는 유지됩니다.)
-        </p>
+        <Alert
+          message="주의: 모든 설정이 초기화됩니다."
+          description="테마, 알림 설정, 언어 등 개인화된 설정이 기본값으로 되돌아갑니다. 저장된 프로젝트 데이터는 삭제되지 않습니다."
+          type="warning"
+          showIcon
+          style={{ marginTop: 16 }}
+        />
+      </Modal>
+
+      {/* 프로필 편집 모달 */}
+      <Modal
+        title="프로필 편집"
+        open={profileModalOpen}
+        onOk={form.submit}
+        onCancel={() => setProfileModalOpen(false)}
+        okText="저장"
+        cancelText="취소"
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleUpdateProfile}
+        >
+          <Form.Item
+            label="이름"
+            name="name"
+            rules={[{ required: true, message: '이름을 입력해주세요' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            label="이메일"
+            name="email"
+            rules={[
+              { required: true, message: '이메일을 입력해주세요' },
+              { type: 'email', message: '유효한 이메일 주소를 입력해주세요' }
+            ]}
+          >
+            <Input />
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

@@ -19,6 +19,7 @@ import Communication from './pages/Communication';
 import Issues from './pages/Issues';
 import Approvals from './pages/Approvals';
 import Wiki from './pages/Wiki';
+import Drive from './pages/Drive';
 import PrivateRoute from './components/PrivateRoute';
 import { SettingsProvider, useSettings } from './store/settingsStore';
 
@@ -68,6 +69,7 @@ const ThemedApp: React.FC = () => {
             <Route path="issues" element={<Issues />} />
             <Route path="approvals" element={<Approvals />} />
             <Route path="wiki" element={<Wiki />} />
+            <Route path="drive" element={<Drive />} />
           </Route>
 
           {/* 404 처리 */}

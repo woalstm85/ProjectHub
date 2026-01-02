@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Layout, Menu, theme, Dropdown, Avatar, Space, Button, Tooltip } from 'antd';
+import { Layout, Menu, theme, Dropdown, Avatar, Space, Tooltip, Typography } from 'antd';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   DashboardOutlined,
@@ -20,7 +20,10 @@ import {
   BugOutlined,
   FileDoneOutlined,
   ReadOutlined,
+  CloudServerOutlined,
+  BgColorsOutlined,
 } from '@ant-design/icons';
+import CommandPalette from '../components/CommandPalette';
 import { useAuthStore } from '../store/authStore';
 import { useSettings } from '../store/settingsStore';
 import NotificationCenter from '../components/NotificationCenter';
@@ -101,7 +104,7 @@ const MainLayout: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuthStore();
-  const { settings, effectiveTheme } = useSettings();
+  const { settings, effectiveTheme, updateSettings, saveSettings } = useSettings();
   const [collapsed, setCollapsed] = useState(false);
   const {
     token: { borderRadiusLG },
@@ -137,14 +140,9 @@ const MainLayout: React.FC = () => {
     { key: '/communication', icon: <NotificationOutlined />, label: '커뮤니케이션' },
     { key: '/approvals', icon: <FileDoneOutlined />, label: '전자결재' },
     { key: '/wiki', icon: <ReadOutlined />, label: '지식 관리' },
+    { key: '/drive', icon: <CloudServerOutlined />, label: '통합 자료실' },
   ];
 
-  const userMenuItems = [
-    { key: 'profile', icon: <UserOutlined />, label: '프로필', onClick: () => navigate('/profile') },
-    { key: 'settings', icon: <SettingOutlined />, label: '설정', onClick: () => navigate('/settings') },
-    { type: 'divider' as const },
-    { key: 'logout', icon: <LogoutOutlined />, label: '로그아웃', danger: true, onClick: () => { logout(); navigate('/login'); } },
-  ];
 
   return (
     <Layout style={{ minHeight: '100vh', background: colors.contentBg }}>
@@ -287,23 +285,120 @@ const MainLayout: React.FC = () => {
             height: 64,
           }}
         >
-          <div></div>
-          <Space size={8}>
-            <Tooltip title="검색">
-              <Button type="text" icon={<SearchOutlined />} style={{ width: 40, height: 40, borderRadius: 8, color: colors.textSecondary }} />
+          {/* Search Bar (Left) - Expandable */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: isDark ? '#1f1f1f' : '#f5f7fa',
+              padding: '0 12px',
+              height: 36, // Reduced height
+              borderRadius: 18, // Pill shape
+              cursor: 'text',
+              width: 40, // Default collapsed width
+              gap: 10,
+              border: `1px solid ${isDark ? 'transparent' : 'transparent'}`,
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              overflow: 'hidden',
+              flexShrink: 0
+            }}
+            onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))}
+            onMouseEnter={e => {
+              e.currentTarget.style.width = '240px';
+              e.currentTarget.style.background = isDark ? '#262626' : '#edf2f7';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.width = '40px';
+              e.currentTarget.style.background = isDark ? '#1f1f1f' : '#f5f7fa';
+            }}
+          >
+            <SearchOutlined style={{ color: colors.textSecondary, fontSize: 18, minWidth: 18 }} />
+            <div style={{ color: colors.textSecondary, fontSize: 13, whiteSpace: 'nowrap', opacity: 1, transition: 'opacity 0.2s', flex: 1 }}>빠른 검색...</div>
+            <div style={{
+              fontSize: 10,
+              background: isDark ? '#303030' : '#fff',
+              padding: '2px 6px',
+              borderRadius: 4,
+              border: `1px solid ${isDark ? '#434343' : '#e2e8f0'}`,
+              color: colors.textSecondary,
+              fontWeight: 600,
+              whiteSpace: 'nowrap'
+            }}>Ctrl K</div>
+          </div>
+
+          {/* Right Side Icons */}
+          <Space size={20}>
+            <Tooltip title="알림">
+              <NotificationCenter />
             </Tooltip>
-            <NotificationCenter />
-            <div style={{ width: 1, height: 24, background: colors.border, margin: '0 8px' }} />
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+
+            <Dropdown
+              menu={{
+                items: [
+                  {
+                    key: 'user-info',
+                    label: (
+                      <div style={{ padding: '8px 4px', minWidth: 200 }}>
+                        <div style={{ fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{user?.name}</div>
+                        <div style={{ color: colors.textSecondary, fontSize: 12, marginBottom: 8 }}>{user?.email}</div>
+                        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                          <span style={{ padding: '2px 8px', borderRadius: 10, background: '#f6ffed', color: '#52c41a', fontSize: 11, border: '1px solid #b7eb8f' }}>온라인</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 10, background: '#e6f7ff', color: '#1890ff', fontSize: 11, border: '1px solid #91d5ff' }}>{user?.role === 'admin' ? '관리자' : '멤버'}</span>
+                        </div>
+                      </div>
+                    ),
+                  },
+                  { type: 'divider' },
+                  {
+                    key: 'theme',
+                    icon: <BgColorsOutlined />,
+                    label: `테마 변경 (${isDark ? '다크' : '라이트'})`,
+                    onClick: () => {
+                      const newTheme = settings.theme === 'light' ? 'dark' : 'light';
+                      updateSettings('theme', newTheme);
+                      saveSettings();
+                    }
+                  },
+                  {
+                    key: 'command',
+                    icon: <SearchOutlined />,
+                    label: <Typography.Text><Space><span>커맨드 센터</span><Typography.Text type="secondary" style={{ fontSize: 10 }}>Ctrl+K</Typography.Text></Space></Typography.Text>,
+                    onClick: () => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true }))
+                  },
+                  { type: 'divider' },
+                  { key: 'settings', icon: <SettingOutlined />, label: '환경설정', onClick: () => navigate('/settings') },
+                  { type: 'divider' },
+                  { key: 'logout', icon: <LogoutOutlined />, label: '로그아웃', danger: true, onClick: () => { logout(); navigate('/login'); } },
+                ],
+                onClick: (info) => {
+                  if (info.key === 'theme') {
+                    // We need to implement toggle here properly.
+                    // Wait, I can't put complex logic easily in inline onClick for the item if I want to use the hook's functions.
+                    // Actually I can, the items array is created in render.
+                  }
+                }
+              }}
+              placement="bottomRight"
+              trigger={['click']}
+              dropdownRender={(menu) => (
+                <div style={{
+                  background: isDark ? '#1f1f1f' : '#ffffff',
+                  borderRadius: 12,
+                  boxShadow: '0 6px 16px -8px rgba(0,0,0,0.08), 0 9px 28px 0 rgba(0,0,0,0.05), 0 12px 48px 16px rgba(0,0,0,0.03)',
+                  padding: 4
+                }}>
+                  {React.cloneElement(menu as React.ReactElement<any>, { style: { boxShadow: 'none', background: 'transparent' } })}
+                </div>
+              )}
+            >
               <div
-                style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '6px 12px', borderRadius: 8, transition: 'all 0.2s' }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = isDark ? '#1f1f1f' : '#f7fafc')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', padding: '4px 8px', borderRadius: 30, transition: 'all 0.2s', border: `1px solid ${colors.border}` }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = settings.primaryColor)}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = colors.border)}
               >
-                <Avatar size={36} icon={<UserOutlined />} src={user?.avatar} style={{ background: `linear-gradient(135deg, ${settings.primaryColor} 0%, ${sidebarTheme.secondaryColor} 100%)` }} />
-                <div style={{ lineHeight: 1.2 }}>
+                <Avatar size={32} icon={<UserOutlined />} src={user?.avatar} style={{ background: `linear-gradient(135deg, ${settings.primaryColor} 0%, ${sidebarTheme.secondaryColor} 100%)` }} />
+                <div style={{ lineHeight: 1.2, paddingRight: 4 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: colors.textPrimary }}>{user?.name || '사용자'}</div>
-                  <div style={{ fontSize: 11, color: colors.textSecondary }}>{user?.role === 'admin' ? '관리자' : '팀원'}</div>
                 </div>
               </div>
             </Dropdown>
@@ -317,6 +412,7 @@ const MainLayout: React.FC = () => {
         </Content>
       </Layout>
 
+      <CommandPalette />
       <style>{`
         .ant-layout-sider .ant-menu-dark { background: transparent !important; }
         .ant-layout-sider .ant-menu-dark .ant-menu-item { margin: 4px 0; padding-left: 16px !important; border-radius: 8px; height: 44px; line-height: 44px; color: rgba(255, 255, 255, 0.7); transition: all 0.2s; }
