@@ -409,7 +409,7 @@ const Dashboard: React.FC = () => {
       <Row gutter={[24, 24]} style={{ marginBottom: 24 }} align="stretch">
         <Col xs={24} md={12} lg={8} style={{ display: 'flex', flexDirection: 'column' }}>
           <Card title="프로젝트 상태" bordered={false} style={commonCardStyle} bodyStyle={cardBodyStyle}>
-            <div style={{ flex: 1, minHeight: 250 }}>
+            <div style={{ flex: 1, minHeight: 250, height: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -435,7 +435,7 @@ const Dashboard: React.FC = () => {
 
         <Col xs={24} md={12} lg={8} style={{ display: 'flex', flexDirection: 'column' }}>
           <Card title="팀원별 업무 부하 (Top 5)" bordered={false} style={commonCardStyle} bodyStyle={cardBodyStyle}>
-            <div style={{ flex: 1, minHeight: 250 }}>
+            <div style={{ flex: 1, minHeight: 250, height: 250 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={teamWorkloadData} layout="vertical" margin={{ left: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} />

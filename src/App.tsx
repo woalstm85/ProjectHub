@@ -20,7 +20,24 @@ import Issues from './pages/Issues';
 import Approvals from './pages/Approvals';
 import Wiki from './pages/Wiki';
 import Drive from './pages/Drive';
+import Support from './pages/Support'; // Import Support
 import PrivateRoute from './components/PrivateRoute';
+// ...
+
+<Route
+  path="/"
+  element={
+    <PrivateRoute>
+      <MainLayout />
+    </PrivateRoute>
+  }
+>
+  <Route index element={<Dashboard />} />
+  {/* ... existing routes ... */}
+  <Route path="wiki" element={<Wiki />} />
+  <Route path="drive" element={<Drive />} />
+  <Route path="support" element={<Support />} /> {/* Add Support Route */}
+</Route>
 import { SettingsProvider, useSettings } from './store/settingsStore';
 
 // 테마가 적용된 앱 컴포넌트

@@ -22,6 +22,7 @@ import {
   ReadOutlined,
   CloudServerOutlined,
   BgColorsOutlined,
+  CustomerServiceOutlined
 } from '@ant-design/icons';
 import CommandPalette from '../components/CommandPalette';
 import { useAuthStore } from '../store/authStore';
@@ -141,6 +142,7 @@ const MainLayout: React.FC = () => {
     { key: '/approvals', icon: <FileDoneOutlined />, label: '전자결재' },
     { key: '/wiki', icon: <ReadOutlined />, label: '지식 관리' },
     { key: '/drive', icon: <CloudServerOutlined />, label: '통합 자료실' },
+    { key: '/support', icon: <CustomerServiceOutlined />, label: '고객지원' }, // Add Support Menu Item
   ];
 
 

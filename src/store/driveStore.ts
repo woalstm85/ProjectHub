@@ -106,28 +106,74 @@ export const useDriveStore = create<DriveStore>()(
                         },
                     ],
                 })),
-            uploadFile: (file, parentId) =>
-                set((state) => ({
-                    items: [
-                        ...state.items,
-                        {
-                            id: `file-${Date.now()}`,
-                            name: file.name,
-                            type: 'FILE',
-                            parentId: parentId,
-                            size: file.size,
-                            format: file.name.split('.').pop() || 'file',
-                            ownerId: 'current-user',
-                            ownerName: '나',
-                            createdAt: new Date(),
-                            updatedAt: new Date(),
-                        },
-                    ],
-                })),
-            deleteItem: (id) =>
+            uploadFile: async (file, parentId) => {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const response = await fetch('http://localhost:3001/upload', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Upload failed');
+                    }
+
+                    await response.json();
+
+                    set((state) => ({
+                        items: [
+                            ...state.items,
+                            {
+                                id: `file-${Date.now()}`,
+                                name: file.name,
+                                type: 'FILE',
+                                parentId: parentId,
+                                size: file.size,
+                                format: file.name.split('.').pop() || 'file',
+                                ownerId: 'current-user',
+                                ownerName: '나',
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                            },
+                        ],
+                    }));
+                } catch (error) {
+                    console.error('Server upload failed, falling back to mock:', error);
+                    // Fallback to Mock if server is off
+                    set((state) => ({
+                        items: [
+                            ...state.items,
+                            {
+                                id: `file-${Date.now()}`,
+                                name: file.name,
+                                type: 'FILE',
+                                parentId: parentId,
+                                size: file.size,
+                                format: file.name.split('.').pop() || 'file',
+                                ownerId: 'current-user',
+                                ownerName: '나 (Mock)',
+                                createdAt: new Date(),
+                                updatedAt: new Date(),
+                            },
+                        ],
+                    }));
+                }
+            },
+            deleteItem: async (id) => {
+                const item = get().items.find(i => i.id === id);
+                // Try to delete from server if it's a file
+                if (item && item.type === 'FILE') {
+                    try {
+                        await fetch(`http://localhost:3001/files/${item.name}`, { method: 'DELETE' });
+                    } catch (e) { console.error('Server delete failed', e) }
+                }
+
                 set((state) => ({
                     items: state.items.filter((item) => item.id !== id && item.parentId !== id),
-                })),
+                }))
+            },
             renameItem: (id, newName) =>
                 set((state) => ({
                     items: state.items.map((item) =>

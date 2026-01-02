@@ -30,7 +30,7 @@ import {
     ClockCircleOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { useWikiStore, type WikiPage, type WikiCategory } from '../store/wikiStore';
+import { useWikiStore, type WikiCategory } from '../store/wikiStore';
 import { useAuthStore } from '../store/authStore';
 
 const { Title, Text, Paragraph } = Typography;

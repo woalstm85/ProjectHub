@@ -34,14 +34,11 @@ import {
   MoonOutlined,
   DesktopOutlined,
   ReloadOutlined,
-  KeyOutlined,
-  InfoCircleOutlined,
   SaveOutlined,
   CloudDownloadOutlined,
   CloudUploadOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
-  MailOutlined
 } from '@ant-design/icons';
 import { useProjectStore } from '../store/projectStore';
 import { useTaskStore } from '../store/taskStore';

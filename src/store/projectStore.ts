@@ -168,6 +168,7 @@ export const useProjectStore = create<ProjectStore>()(
             const member = memberStore.getMemberById(memberId);
             if (member) {
               messageStore.sendMessage({
+                type: 'DIRECT',
                 senderId: user?.id || 'admin',
                 senderName: user?.name || '관리자',
                 receiverId: member.id,
@@ -226,6 +227,7 @@ export const useProjectStore = create<ProjectStore>()(
               const member = memberStore.getMemberById(memberId);
               if (member) {
                 messageStore.sendMessage({
+                  type: 'DIRECT',
                   senderId: user?.id || 'admin',
                   senderName: user?.name || '관리자',
                   receiverId: member.id,

@@ -130,7 +130,7 @@ const NotificationCenter: React.FC = () => {
             title: m.content.includes('프로젝트') ? '프로젝트 알림' : '새 메시지',
             description: m.content,
             timestamp: m.createdAt,
-            read: m.isRead,
+            read: m.isRead || false,
           });
         });
     }

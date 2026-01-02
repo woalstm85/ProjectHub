@@ -13,7 +13,8 @@ import {
     message,
     Dropdown,
     Segmented,
-    Empty
+    Empty,
+    Tooltip
 } from 'antd';
 import {
     FolderOpenOutlined,
@@ -106,6 +107,9 @@ const Drive: React.FC = () => {
     const handleFolderClick = (item: DriveItem) => {
         if (item.type === 'FOLDER') {
             setCurrentFolderId(item.id);
+        } else if (item.type === 'FILE') {
+            const fileUrl = `http://localhost:3001/files/${item.name}`;
+            window.open(fileUrl, '_blank');
         }
     };
 
@@ -248,26 +252,28 @@ const Drive: React.FC = () => {
                                 <Card
                                     key={item.id}
                                     hoverable
-                                    style={{ width: 140, textAlign: 'center', borderRadius: 12, border: '1px solid #f0f0f0' }}
+                                    style={{ width: 160, textAlign: 'center', borderRadius: 12, border: '1px solid #f0f0f0' }}
                                     bodyStyle={{ padding: 16 }}
                                     onClick={() => handleFolderClick(item)}
                                 >
                                     <div style={{ marginBottom: 12 }}>
                                         {getFileIcon(item)}
                                     </div>
-                                    <Text
-                                        style={{
-                                            display: 'block',
-                                            maxWidth: '100%',
-                                            overflow: 'hidden',
-                                            whiteSpace: 'nowrap',
-                                            textOverflow: 'ellipsis',
-                                            fontSize: 13
-                                        }}
-                                        title={item.name}
-                                    >
-                                        {item.name}
-                                    </Text>
+                                    <Tooltip title={item.name}>
+                                        <Text
+                                            style={{
+                                                display: '-webkit-box',
+                                                WebkitLineClamp: 2,
+                                                WebkitBoxOrient: 'vertical',
+                                                overflow: 'hidden',
+                                                fontSize: 13,
+                                                lineHeight: '1.4',
+                                                height: '2.8em' // approx 2 lines
+                                            }}
+                                        >
+                                            {item.name}
+                                        </Text>
+                                    </Tooltip>
                                     <div style={{
                                         position: 'absolute',
                                         top: 8,
